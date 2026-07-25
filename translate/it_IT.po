@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Sports Widget for Plasma\n"
 "Report-Msgid-Bugs-To: https://github.com/pnedyalkov91/sports-widget-for-plasma/issues\n"
 "POT-Creation-Date: 2026-07-02 18:22+0300\n"
-"PO-Revision-Date: 2026-07-25 03:41+0200\n"
+"PO-Revision-Date: 2026-07-25 05:16+0200\n"
 "Last-Translator: Aldo Latino <aldolat@gmail.com>\n"
 "Language-Team: Italian <kde-i18n-it@kde.org>\n"
 "Language: it\n"
@@ -132,7 +132,7 @@ msgstr "8:30:05 PM"
 #: contents/ui/FullRepresentation.qml:1527
 msgctxt "@label:abbreviation goals against"
 msgid "A"
-msgstr "S"
+msgstr "GS"
 
 #: contents/ui/config/SavedLeaguesList.qml:349
 msgctxt "@action:button"
@@ -578,7 +578,7 @@ msgstr "Tempi supplementari: secondo tempo"
 #: contents/ui/FullRepresentation.qml:1521
 msgctxt "@label:abbreviation goals for"
 msgid "F"
-msgstr "F"
+msgstr "GF"
 
 #: contents/ui/config/tabs/NotificationsAlertsTab.qml:144
 msgctxt "@option:check"
@@ -623,7 +623,7 @@ msgstr "Segui l'intera competizione."
 #: contents/ui/FullRepresentation.qml:1545 contents/ui/TableTab.qml:351
 msgctxt "@label"
 msgid "Form"
-msgstr "Forma"
+msgstr "Ultime 5"
 
 #: contents/ui/config/ConfigGeneral.qml:171
 msgctxt "@label:spinbox"
