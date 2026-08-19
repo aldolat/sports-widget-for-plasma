@@ -25,6 +25,7 @@ import QtQuick.Layouts
 import org.kde.kcmutils as KCM
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasmoid
+import org.kde.plasma.plasma5support as Plasma5Support
 
 KCM.SimpleKCM {
     id: root
@@ -581,8 +582,105 @@ KCM.SimpleKCM {
         timer.start();
     }
 
+    // ESPN's edge (site.api.espn.com) rejects QML XMLHttpRequest traffic with a
+    // bare HTTP 403 regardless of headers - User-Agent specifically cannot be
+    // set from QML script (silently ignored per the XHR spec). Plain `curl URL`
+    // with no header overrides (curl's own default "curl/x.y.z" UA) succeeded
+    // in every manual test; an impersonated browser UA via curl did NOT fare
+    // any better, so route ESPN requests through curl via the executable
+    // DataSource with no custom headers at all - matching what's proven to
+    // actually work.
+    readonly property string espnCurlStatusMarker: "__ESPN_CURL_STATUS__"
+
+    // Single-quotes a string for safe inclusion as one shell argument (standard
+    // POSIX technique: close the quote, escape the embedded quote, reopen it).
+    function shellQuote(value) {
+        return "'" + String(value).replace(/'/g, "'\\''") + "'";
+    }
+
+    Plasma5Support.DataSource {
+        id: espnCurlSource
+        engine: "executable"
+        // sourceName (the exact command string) -> { onSuccess, onError }
+        property var pending: ({})
+
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName);
+            const callbacks = pending[sourceName];
+            delete pending[sourceName];
+            if (!callbacks) {
+                console.warn("[nhl-debug][raw]", sourceName, "| exit:", data["exit code"], "| stdout:", data["stdout"], "| stderr:", data["stderr"]);
+                return;
+            }
+
+            const exitCode = data["exit code"];
+            const stdout = String(data["stdout"] || "");
+            const stderr = String(data["stderr"] || "");
+            if (exitCode !== 0) {
+                callbacks.onError("curl exit " + exitCode + (stderr.length > 0 ? (": " + stderr.trim()) : ""));
+                return;
+            }
+
+            const marker = "\n" + root.espnCurlStatusMarker + ":";
+            const markerIndex = stdout.lastIndexOf(marker);
+            if (markerIndex < 0) {
+                callbacks.onError("malformed curl output (missing status marker)");
+                return;
+            }
+
+            const body = stdout.slice(0, markerIndex);
+            const status = parseInt(stdout.slice(markerIndex + marker.length).trim(), 10);
+            if (status >= 200 && status < 300) {
+                callbacks.onSuccess(body);
+            } else {
+                callbacks.onError("HTTP " + status + " (via curl)");
+            }
+        }
+    }
+
+    property int espnCurlRequestCounter: 0
+
+    // Runs an ESPN GET request through curl instead of QML's XMLHttpRequest.
+    // Deliberately sends NO custom headers - every manual `curl URL` test (no
+    // -H overrides, curl's own honest "curl/x.y.z" User-Agent) succeeded
+    // throughout debugging, while impersonating a browser UA still got 403'd.
+    // A fake browser UA with none of a real browser's other signals (TLS
+    // fingerprint, Client Hints, cookies, JS) is a stronger bot signal than an
+    // honest, unmasked tool UA a WAF may simply allowlist. Match what's proven
+    // to work rather than what looks superficially more "legitimate".
+    // Matches SportsApi.setEspnRequester(url, onSuccess, onError)'s contract.
+    function runEspnCurl(url, onSuccess, onError) {
+        root.espnCurlRequestCounter += 1;
+        // REQ_ID= is an inert shell variable assignment scoped to this command -
+        // curl never sees it. Its only purpose is guaranteeing a unique command
+        // string per call, so DataSource's sourceName can never collide even if
+        // two identical URLs land in the same cache-bust time bucket.
+        const command = "REQ_ID=" + root.espnCurlRequestCounter + " curl -s -m 14 "
+            + "-w " + root.shellQuote("\n" + root.espnCurlStatusMarker + ":%{http_code}") + " "
+            + root.shellQuote(url);
+        espnCurlSource.pending[command] = { onSuccess: onSuccess, onError: onError };
+        espnCurlSource.connectSource(command);
+    }
+
+    // TEMP DIAGNOSTIC (nhl-debug): plain curl succeeds from an interactive
+    // shell every time, but the identical command fails via this DataSource -
+    // meaning the two invocations aren't as identical as they look. Dump what
+    // plasmashell's spawned processes actually see (which curl, its version/
+    // TLS backend, full environment) so it can be diffed against the user's
+    // own shell. Remove this block once the discrepancy is found.
+    property bool espnDiagnosticRun: false
+
+    function runEspnDiagnostic() {
+        if (root.espnDiagnosticRun)
+            return;
+        root.espnDiagnosticRun = true;
+        espnCurlSource.connectSource("echo WHICH:; which curl; echo VERSION:; curl --version; echo ENV:; env | sort");
+    }
+
     Component.onCompleted: {
         SportsApi.setDelayScheduler(root.scheduleNetworkDelay);
+        SportsApi.setEspnRequester(root.runEspnCurl);
+        root.runEspnDiagnostic();
         if (!root.cfg_defaultSelectionMigrated && root.cfg_selectedSports === "football" && root.cfg_country === "england" && root.cfg_league === "english-premier-league" && root.cfg_favoriteTeam.length === 0 && root.savedLeagues().length === 0) {
             root.cfg_selectedSports = "";
             root.cfg_country = "";

@@ -23,6 +23,7 @@ import "../code/CalendarSync.js" as CalendarSync
 import "../code/providers/ProviderCatalog.js" as ProviderCatalog
 import "../code/providers/ProviderCountries.js" as ProviderCountries
 import "../code/providers/PopularCatalog.js" as PopularCatalog
+import "../code/providers/EspnSports.js" as EspnSports
 import "config" as WizardConfig
 import QtQuick
 import QtQuick.Layouts
@@ -188,7 +189,7 @@ PlasmoidItem {
     // Which data providers actually supplied the currently-loaded matches, so the
     // footer can credit each one in use (SportScore and/or ESPN). Recomputed
     // whenever the loaded match sets change.
-    readonly property var activeProviders: root.computeActiveProviders(root.latestLiveMatches, root.latestScheduleMatches, root.latestRecentMatches)
+    readonly property var activeProviders: root.computeActiveProviders(root.latestLiveMatches, root.latestScheduleMatches, root.latestRecentMatches, root.activeSport)
     property var discoveredTeamCompetitions: []
     property var teamTableOptions: []
     property var unsupportedTableSlugs: ({})
@@ -3146,7 +3147,7 @@ PlasmoidItem {
     // sets, as a stable-ordered list of { name, url } (SportScore first, then
     // ESPN). Used to credit each active source in the footer. A match is ESPN if
     // its detailsProvider/sourceProvider says so; otherwise it is SportScore.
-    function computeActiveProviders(live, schedule, recent) {
+    function computeActiveProviders(live, schedule, recent, sport) {
         let sawEspn = false;
         let sawSportScore = false;
         const scan = (list) => {
@@ -3167,10 +3168,19 @@ PlasmoidItem {
             providers.push({ "name": "SportScore", "url": "https://sportscore.com/" });
         if (sawEspn)
             providers.push({ "name": "ESPN", "url": "https://www.espn.com/" });
-        // Default to SportScore before any data has loaded, so the footer is never
-        // empty on first paint.
-        if (providers.length === 0)
-            providers.push({ "name": "SportScore", "url": "https://sportscore.com/" });
+        // Before any data has loaded (or when a fetch has failed/returned empty),
+        // there is nothing in `live`/`schedule`/`recent` to scan, so fall back to
+        // whichever provider actually CAN serve the active sport rather than
+        // blindly assuming SportScore - an ESPN-native sport (hockey, American
+        // football, etc.) is never going to have SportScore involved at all, so
+        // crediting SportScore there is simply wrong, not just a placeholder.
+        if (providers.length === 0) {
+            const normalizedSport = SportVisuals.normalizedSport(sport);
+            if (EspnSports.isNative(normalizedSport))
+                providers.push({ "name": "ESPN", "url": "https://www.espn.com/" });
+            else
+                providers.push({ "name": "SportScore", "url": "https://sportscore.com/" });
+        }
         return providers;
     }
 
@@ -4215,8 +4225,81 @@ PlasmoidItem {
         Plasmoid.configuration.widgetTabs = "";
     }
 
+    // ESPN's edge (site.api.espn.com) rejects QML XMLHttpRequest traffic with a
+    // bare HTTP 403 regardless of headers - User-Agent specifically cannot be
+    // set from QML script (silently ignored per the XHR spec). Plain `curl URL`
+    // with no header overrides succeeds reliably; route ESPN requests through
+    // curl via the executable DataSource instead, with no custom headers.
+    // This mirrors ConfigSport.qml's identical setup - the config dialog runs
+    // in its own separate QML engine, so this wiring (like setDelayScheduler)
+    // has to be duplicated here for the main applet engine too.
+    readonly property string espnCurlStatusMarker: "__ESPN_CURL_STATUS__"
+    property int espnCurlRequestCounter: 0
+
+    // Single-quotes a string for safe inclusion as one shell argument (standard
+    // POSIX technique: close the quote, escape the embedded quote, reopen it).
+    function shellQuote(value) {
+        return "'" + String(value).replace(/'/g, "'\\''") + "'";
+    }
+
+    Plasma5Support.DataSource {
+        id: espnCurlSource
+        engine: "executable"
+        // sourceName (the exact command string) -> { onSuccess, onError }
+        property var pending: ({})
+
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName);
+            const callbacks = pending[sourceName];
+            delete pending[sourceName];
+            if (!callbacks) {
+                console.warn("[nhl-debug][raw]", sourceName, "| exit:", data["exit code"], "| stdout:", data["stdout"], "| stderr:", data["stderr"]);
+                return;
+            }
+
+            const exitCode = data["exit code"];
+            const stdout = String(data["stdout"] || "");
+            const stderr = String(data["stderr"] || "");
+            if (exitCode !== 0) {
+                callbacks.onError("curl exit " + exitCode + (stderr.length > 0 ? (": " + stderr.trim()) : ""));
+                return;
+            }
+
+            const marker = "\n" + root.espnCurlStatusMarker + ":";
+            const markerIndex = stdout.lastIndexOf(marker);
+            if (markerIndex < 0) {
+                callbacks.onError("malformed curl output (missing status marker)");
+                return;
+            }
+
+            const body = stdout.slice(0, markerIndex);
+            const status = parseInt(stdout.slice(markerIndex + marker.length).trim(), 10);
+            if (status >= 200 && status < 300) {
+                callbacks.onSuccess(body);
+            } else {
+                callbacks.onError("HTTP " + status + " (via curl)");
+            }
+        }
+    }
+
+    // Runs an ESPN GET request through curl instead of QML's XMLHttpRequest.
+    // Matches SportsApi.setEspnRequester(url, onSuccess, onError)'s contract.
+    function runEspnCurl(url, onSuccess, onError) {
+        root.espnCurlRequestCounter += 1;
+        // REQ_ID= is an inert shell variable assignment scoped to this command -
+        // curl never sees it. Its only purpose is guaranteeing a unique command
+        // string per call, so DataSource's sourceName can never collide even if
+        // two identical URLs land in the same cache-bust time bucket.
+        const command = "REQ_ID=" + root.espnCurlRequestCounter + " curl -s -m 14 "
+            + "-w " + root.shellQuote("\n" + root.espnCurlStatusMarker + ":%{http_code}") + " "
+            + root.shellQuote(url);
+        espnCurlSource.pending[command] = { onSuccess: onSuccess, onError: onError };
+        espnCurlSource.connectSource(command);
+    }
+
     Component.onCompleted: {
         SportsApi.setDelayScheduler(root.scheduleNetworkDelay);
+        SportsApi.setEspnRequester(root.runEspnCurl);
         migrateDefaultSelection();
         migrateWidgetTabsPreset();
         seedFromCache();

@@ -84,6 +84,51 @@ let _requestCooldownUntil = 0;
 let _sportScoreFailureStreak = 0;
 let _sportScoreBreakerUntil = 0;
 let _delayScheduler = null;
+// Optional injected function(url, onSuccess, onError) that runs an ESPN
+// request via an external process (curl, through Plasma5Support.DataSource)
+// instead of QML's XMLHttpRequest. ESPN's edge (site.api.espn.com) rejects
+// XHR-originated requests with a bare HTTP 403 regardless of headers set via
+// setRequestHeader() - User-Agent specifically cannot be overridden from QML
+// script per the XHR spec (silently ignored), and curl has proven reliable
+// against the same endpoints in every test. When unset, ESPN fetches fall
+// back to the normal XHR request queue.
+let _espnRequester = null;
+
+function setEspnRequester(runner) {
+    _espnRequester = (typeof runner === "function") ? runner : null;
+}
+
+// Single choke point for ALL ESPN requests (site.api.espn.com's /apis/site/v2,
+// /apis/v2, and sports.core.api.espn.com alike - all sit behind the same edge/
+// WAF that 403s plain XHR traffic). Every ESPN-hitting fetch function should
+// call this instead of requestText(cacheBustedUrl(...)) directly, so the curl
+// routing fix applies uniformly rather than needing to be re-applied per
+// function every time a new ESPN endpoint is added.
+function requestEspnText(url, onSuccess, onError) {
+    const busted = cacheBustedUrl(url);
+    // TEMP DIAGNOSTIC (nhl-debug): kept in per request while the ESPN 403
+    // investigation is ongoing across all endpoints, not just teams.
+    if (_espnRequester) {
+        console.warn("[nhl-debug] requestEspnText via injected ESPN requester (curl):", busted);
+        _espnRequester(busted, text => {
+            console.warn("[nhl-debug] requestEspnText response length:", stringValue(text).length);
+            finish(onSuccess, text);
+        }, error => {
+            console.warn("[nhl-debug] requestEspnText onError fired:", error);
+            finish(onError, error);
+        });
+        return;
+    }
+
+    console.warn("[nhl-debug] requestEspnText via XHR fallback (no ESPN requester set):", busted);
+    requestText(busted, text => {
+        console.warn("[nhl-debug] requestEspnText response length:", stringValue(text).length);
+        finish(onSuccess, text);
+    }, error => {
+        console.warn("[nhl-debug] requestEspnText onError fired:", error);
+        finish(onError, error);
+    }, { ignoreCooldown: true });
+}
 
 // Runs the ESPN scoreboard for an entry/mode as a race runner, or null when ESPN
 // can't help with this entry.
@@ -1838,7 +1883,7 @@ function fetchEspnScoreboardWindow(espnSport, league, dates, mode, options, onSu
     const sportValue = normalizedSport(options && (options.sports || options.sport)) || EspnSports.normalizedSport(espnSport);
     const leagueLabel = stringValue(options && options.leagueLabel);
     const merged = Object.assign({}, options, { espnSport: espnSport, espnLeague: league });
-    requestText(cacheBustedUrl(espnScoreboardUrl(espnSport, league, dates, limit)), text => {
+    requestEspnText(espnScoreboardUrl(espnSport, league, dates, limit), text => {
         let rows = [];
         rows = profileSync("espnScoreboardWindow parse", league + "/" + mode + ", text=" + stringValue(text).length + "B", () => {
             try {
@@ -1848,7 +1893,7 @@ function fetchEspnScoreboardWindow(espnSport, league, dates, mode, options, onSu
             }
         });
         finish(onSuccess, espnRowsForMode(filterEspnRowsForEntry(rows, options), mode, modeLimit));
-    }, error => finish(onError, error || "Unable to load ESPN scoreboard"), { ignoreCooldown: true });
+    }, error => finish(onError, error || "Unable to load ESPN scoreboard"));
 }
 
 function fetchEspnScoreboard(espnSport, league, mode, options, onSuccess, onError) {
@@ -1943,7 +1988,7 @@ function fetchEspnScoreboard(espnSport, league, mode, options, onSuccess, onErro
     const merged = Object.assign({}, options, { espnSport: espnSport, espnLeague: league });
     const url = espnScoreboardUrl(espnSport, league, espnUnifiedDates(options));
 
-    requestText(cacheBustedUrl(url), text => {
+    requestEspnText(url, text => {
         let rows = [];
         try {
             rows = normalizeEspnScoreboard(JSON.parse(text), sportValue, leagueLabel, merged);
@@ -1974,7 +2019,7 @@ function fetchEspnScoreboard(espnSport, league, mode, options, onSuccess, onErro
         delete _espnScoreboardWaiters[key];
         const message = error || "Unable to load ESPN scoreboard";
         waiters.forEach(waiter => finish(waiter.onError, message));
-    }, { ignoreCooldown: true });
+    });
 }
 
 // Standings → the same row shape as normalizeSportScoreWidgetStandings.
@@ -2142,7 +2187,7 @@ function fetchEspnLeagueFormMap(espnSport, league, options, onDone, season) {
     const limit = season.length === 4 ? ESPN_RECENT_FALLBACK_LIMIT : ESPN_MATCH_LIMIT;
     const sportValue = normalizedSport(options && (options.sports || options.sport)) || EspnSports.normalizedSport(espnSport);
     const merged = Object.assign({}, options, { espnSport: espnSport, espnLeague: league });
-    requestText(cacheBustedUrl(espnScoreboardUrl(espnSport, league, dates, limit)), text => {
+    requestEspnText(espnScoreboardUrl(espnSport, league, dates, limit), text => {
         let matches = [];
         try {
             matches = normalizeEspnScoreboard(JSON.parse(text), sportValue, "", merged);
@@ -2150,7 +2195,7 @@ function fetchEspnLeagueFormMap(espnSport, league, options, onDone, season) {
             matches = [];
         }
         finish(onDone, espnFormByTeam(matches));
-    }, () => finish(onDone, {}), { ignoreCooldown: true });
+    }, () => finish(onDone, {}));
 }
 
 // Extract a 4-digit ESPN season year from the selected season option. ESPN
@@ -2185,7 +2230,7 @@ function fetchEspnStandings(espnSport, league, options, onSuccess, onError) {
     let url = ESPN_STANDINGS_BASE + "/" + encodeURIComponent(espnSport) + "/" + encodeURIComponent(league) + "/standings?level=3";
     if (season.length > 0)
         url += "&season=" + encodeURIComponent(season);
-    requestText(cacheBustedUrl(url), text => {
+    requestEspnText(url, text => {
         let rows = [];
         try {
             rows = normalizeEspnStandings(JSON.parse(text), stringValue(options && options.leagueLabel));
@@ -2210,7 +2255,7 @@ function fetchEspnStandings(espnSport, league, options, onSuccess, onError) {
             });
             finish(onSuccess, rows);
         }, formSeason);
-    }, error => finish(onError, error || "Unable to load ESPN standings"), { ignoreCooldown: true });
+    }, error => finish(onError, error || "Unable to load ESPN standings"));
 }
 
 // ESPN seasons for a league, as season-dropdown options. Reads the core API's
@@ -2232,7 +2277,7 @@ function fetchEspnSeasons(espnSport, league, options, onSuccess, onError) {
     }
     const seasonsUrl = ESPN_CORE_BASE + "/" + encodeURIComponent(espnSport) + "/leagues/" + encodeURIComponent(league) + "/seasons?limit=100";
     fetchEspnCurrentSeasonYear(espnSport, league, currentYear => {
-        requestText(cacheBustedUrl(seasonsUrl), text => {
+        requestEspnText(seasonsUrl, text => {
             let rows = [];
             try {
                 rows = normalizeEspnSeasons(JSON.parse(text), currentYear);
@@ -2240,7 +2285,7 @@ function fetchEspnSeasons(espnSport, league, options, onSuccess, onError) {
                 rows = [];
             }
             finish(onSuccess, rows);
-        }, error => finish(onError, error || "Unable to load ESPN seasons"), { ignoreCooldown: true });
+        }, error => finish(onError, error || "Unable to load ESPN seasons"));
     });
 }
 
@@ -2249,7 +2294,7 @@ function fetchEspnSeasons(espnSport, league, options, onSuccess, onError) {
 // back to their own heuristic.
 function fetchEspnCurrentSeasonYear(espnSport, league, onDone) {
     const url = ESPN_CORE_BASE + "/" + encodeURIComponent(espnSport) + "/leagues/" + encodeURIComponent(league);
-    requestText(cacheBustedUrl(url), text => {
+    requestEspnText(url, text => {
         let year = "";
         try {
             const payload = JSON.parse(text);
@@ -2258,7 +2303,7 @@ function fetchEspnCurrentSeasonYear(espnSport, league, onDone) {
             year = "";
         }
         finish(onDone, /^\d{4}$/.test(year) ? year : "");
-    }, () => finish(onDone, ""), { ignoreCooldown: true });
+    }, () => finish(onDone, ""));
 }
 
 // `currentYear` is ESPN's authoritative current-season year (or "" if unknown). The
@@ -2307,6 +2352,39 @@ function normalizeEspnSeasons(payload, currentYear) {
 }
 
 // Teams → the same option shape as fetchCompetitionTeams.
+function parseEspnTeamsPayload(text, country) {
+    let rows = [];
+    try {
+        const payload = JSON.parse(text);
+        const groups = arrayValue(payload && payload.sports && payload.sports[0] && payload.sports[0].leagues);
+        const list = groups.length > 0 ? arrayValue(groups[0].teams) : [];
+        console.warn("[nhl-debug] parsed groups:", groups.length, "teams in list:", list.length);
+        const seen = {};
+        list.forEach(item => {
+            const team = (item && item.team) || item || {};
+            const label = stringValue(team.displayName || team.name || team.shortDisplayName);
+            const slug = ProviderCatalog.slugForValue(team.slug || team.abbreviation || team.id);
+            if (label.length === 0 || seen[slug || label.toLowerCase()])
+                return;
+            seen[slug || label.toLowerCase()] = true;
+            rows.push({
+                label: label,
+                value: label,
+                slug: slug,
+                teamSlug: slug,
+                teamPath: "",
+                badge: espnLogoFromTeam(team),
+                country: country
+            });
+        });
+    } catch (error) {
+        console.warn("[nhl-debug] JSON.parse threw:", error, "raw text length was:", stringValue(text).length);
+        rows = [];
+    }
+    rows.sort((a, b) => stringValue(a.label).localeCompare(stringValue(b.label)));
+    return rows;
+}
+
 function fetchEspnTeams(espnSport, league, options, onSuccess, onError) {
     if (stringValue(espnSport).length === 0 || stringValue(league).length === 0) {
         finish(onSuccess, []);
@@ -2314,36 +2392,12 @@ function fetchEspnTeams(espnSport, league, options, onSuccess, onError) {
     }
     const country = stringValue(options && options.country);
     const url = ESPN_SITE_BASE + "/" + encodeURIComponent(espnSport) + "/" + encodeURIComponent(league) + "/teams?limit=" + ESPN_MATCH_LIMIT;
-    requestText(cacheBustedUrl(url), text => {
-        let rows = [];
-        try {
-            const payload = JSON.parse(text);
-            const groups = arrayValue(payload && payload.sports && payload.sports[0] && payload.sports[0].leagues);
-            const list = groups.length > 0 ? arrayValue(groups[0].teams) : [];
-            const seen = {};
-            list.forEach(item => {
-                const team = (item && item.team) || item || {};
-                const label = stringValue(team.displayName || team.name || team.shortDisplayName);
-                const slug = ProviderCatalog.slugForValue(team.slug || team.abbreviation || team.id);
-                if (label.length === 0 || seen[slug || label.toLowerCase()])
-                    return;
-                seen[slug || label.toLowerCase()] = true;
-                rows.push({
-                    label: label,
-                    value: label,
-                    slug: slug,
-                    teamSlug: slug,
-                    teamPath: "",
-                    badge: espnLogoFromTeam(team),
-                    country: country
-                });
-            });
-        } catch (error) {
-            rows = [];
-        }
-        rows.sort((a, b) => stringValue(a.label).localeCompare(stringValue(b.label)));
+
+    requestEspnText(url, text => {
+        const rows = parseEspnTeamsPayload(text, country);
+        console.warn("[nhl-debug] fetchEspnTeams final row count:", rows.length);
         finish(onSuccess, rows);
-    }, error => finish(onError, error || "Unable to load ESPN teams"), { ignoreCooldown: true });
+    }, error => finish(onError, error || "Unable to load ESPN teams"));
 }
 
 // One ESPN athlete → a followable row in the SAME shape as fetchEspnTeams, so the
@@ -2391,7 +2445,7 @@ function fetchEspnEventPlayers(espnSport, league, options, onSuccess, onError) {
     const now = Date.now();
     const dates = espnDate(now - 120 * day) + "-" + espnDate(now + 60 * day);
     const url = espnScoreboardUrl(espnSport, league, dates);
-    requestText(cacheBustedUrl(url), text => {
+    requestEspnText(url, text => {
         let rows = [];
         try {
             const payload = JSON.parse(text);
@@ -2412,7 +2466,7 @@ function fetchEspnEventPlayers(espnSport, league, options, onSuccess, onError) {
         }
         rows.sort((a, b) => stringValue(a.label).localeCompare(stringValue(b.label)));
         finish(onSuccess, rows);
-    }, error => finish(onError, error || "Unable to load ESPN players"), { ignoreCooldown: true });
+    }, error => finish(onError, error || "Unable to load ESPN players"));
 }
 
 // Tennis (and other player sports) have no roster, but ESPN's rankings feed lists
@@ -2426,7 +2480,7 @@ function fetchEspnTennisPlayers(espnSport, league, options, onSuccess, onError) 
         return;
     }
     const url = ESPN_SITE_BASE + "/" + encodeURIComponent(espnSport) + "/" + encodeURIComponent(league) + "/rankings";
-    requestText(cacheBustedUrl(url), text => {
+    requestEspnText(url, text => {
         let rows = [];
         try {
             const payload = JSON.parse(text);
@@ -2444,7 +2498,7 @@ function fetchEspnTennisPlayers(espnSport, league, options, onSuccess, onError) 
         }
         // Keep ranking order (rows already pushed #1..#N); no alpha sort here.
         finish(onSuccess, rows);
-    }, error => finish(onError, error || "Unable to load ESPN tennis players"), { ignoreCooldown: true });
+    }, error => finish(onError, error || "Unable to load ESPN tennis players"));
 }
 
 // Maps an ESPN play "type.type" to the same incident kind vocabulary
@@ -2973,7 +3027,7 @@ function fetchEspnMatchSummary(espnSport, espnLeague, eventId, sportValue, optio
     }
     const url = ESPN_SITE_BASE + "/" + encodeURIComponent(espnSport) + "/" + encodeURIComponent(espnLeague)
         + "/summary?event=" + encodeURIComponent(eventId);
-    requestText(cacheBustedUrl(url), text => {
+    requestEspnText(url, text => {
         let result = null;
         try {
             const payload = JSON.parse(text);
@@ -3006,7 +3060,7 @@ function fetchEspnMatchSummary(espnSport, espnLeague, eventId, sportValue, optio
             result = null;
         }
         finish(onSuccess, result);
-    }, error => finish(onError, error || "Unable to load ESPN match summary"), { ignoreCooldown: true });
+    }, error => finish(onError, error || "Unable to load ESPN match summary"));
 }
 
 // Fetches the play-by-play feed for one ESPN event and filters/normalizes it to
@@ -3025,7 +3079,7 @@ function fetchEspnMatchIncidents(espnSport, espnLeague, eventId, homeTeam, awayT
         + "/events/" + encodeURIComponent(eventId) + "/competitions/" + encodeURIComponent(eventId)
         + "/plays?limit=" + ESPN_PLAYS_LIMIT;
 
-    requestText(cacheBustedUrl(url), text => {
+    requestEspnText(url, text => {
         let rows = [];
         try {
             const payload = JSON.parse(text);
@@ -3052,7 +3106,7 @@ function fetchEspnMatchIncidents(espnSport, espnLeague, eventId, homeTeam, awayT
             rows = [];
         }
         finish(onSuccess, rows);
-    }, error => finish(onError, error || "Unable to load ESPN match incidents"), { ignoreCooldown: true });
+    }, error => finish(onError, error || "Unable to load ESPN match incidents"));
 }
 
 function isTeamRequest(options) {
@@ -5531,6 +5585,14 @@ function sendQueuedRequest(job) {
     const xhr = new XMLHttpRequest();
     xhr.open("GET", job.url);
     xhr.timeout = REQUEST_TIMEOUT_MS;
+    // Some upstreams (notably ESPN's undocumented site.api.espn.com) sit behind
+    // bot-detection/WAF and reject requests with no recognizable browser-like
+    // headers, even though the same endpoint is publicly accessible to a normal
+    // fetch() from espn.com's own frontend or a plain curl. Set a standard
+    // header set so requests aren't distinguishable from ordinary web traffic.
+    xhr.setRequestHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+    xhr.setRequestHeader("Accept", "application/json, text/plain, */*");
+    xhr.setRequestHeader("Accept-Language", "en-US,en;q=0.9");
 
     const settle = (succeeded, payload, status) => {
         _activeRequestCount -= 1;
@@ -5667,7 +5729,12 @@ function cacheBustedUrl(url) {
 
     const separator = value.indexOf("?") >= 0 ? "&" : "?";
     const bucket = Math.floor(Date.now() / CACHE_BUST_BUCKET_MS);
-    return value + separator + "src=sports-widget-for-plasma&t=" + bucket;
+    // Only "t" does real cache-busting work. A prior "src=sports-widget-for-plasma"
+    // self-identifying tag was appended here too - harmless in intent, but on an
+    // undocumented API (ESPN's site.api.espn.com) a non-browser-looking query
+    // fingerprint like that is exactly what bot-detection/WAF heuristics flag,
+    // which is the likely cause of the ESPN 403s some users saw on NHL team loads.
+    return value + separator + "t=" + bucket;
 }
 
 // In-flight de-duplication for shared HTML pages (a team or competition page is
