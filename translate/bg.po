@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sports Widget for Plasma\n"
 "Report-Msgid-Bugs-To: https://github.com/pnedyalkov91/sports-widget-for-plasma/issues\n"
-"POT-Creation-Date: 2026-08-05 19:38+0300\n"
+"POT-Creation-Date: 2026-08-20 08:50+0300\n"
 "PO-Revision-Date: 2026-07-02 18:06+0300\n"
 "Last-Translator: \n"
 "Language-Team: Bulgarian <kde-i18n-doc@kde.org>\n"
@@ -64,7 +64,7 @@ msgctxt "@info:font preview; %1 is point size, %2 is family"
 msgid "%1 pt %2"
 msgstr "%1 pt %2"
 
-#: contents/ui/main.qml:936
+#: contents/ui/main.qml:937
 msgctxt "@label"
 msgid "%1 saved team"
 msgid_plural "%1 saved teams"
@@ -81,6 +81,11 @@ msgstr "%1 избрани"
 msgctxt "@label %1 and %2 are team names"
 msgid "%1 vs %2"
 msgstr "%1 срещу %2"
+
+#: contents/code/providers/SportScoreSports.js:118
+msgctxt "Abbreviation for 'point differential' in a basketball standings table, keep very short"
+msgid "+/-"
+msgstr ""
 
 #: contents/ui/config/tabs/AppearanceMiscTab.qml:94
 msgctxt "@item:inlistbox"
@@ -132,6 +137,11 @@ msgctxt "@label:abbreviation goals against"
 msgid "A"
 msgstr "З"
 
+#: contents/code/providers/SportScoreSports.js:179
+msgctxt "Abbreviation for 'goals against' in a football/soccer standings table, keep very short"
+msgid "A"
+msgstr ""
+
 #: contents/ui/config/SavedLeaguesList.qml:349
 msgctxt "@action:button"
 msgid "Add"
@@ -158,7 +168,7 @@ msgctxt "@action:button"
 msgid "Add a Sport"
 msgstr "Добавяне на спорт"
 
-#: contents/ui/main.qml:217
+#: contents/ui/main.qml:218
 msgctxt "@action:button"
 msgid "Add a sport"
 msgstr "Добавяне на спорт"
@@ -168,7 +178,7 @@ msgctxt "@info"
 msgid "Add a sport and league to show schedules, tables and fixtures."
 msgstr "Добавете спорт и лига, за да виждате разписания, таблици и срещи."
 
-#: contents/ui/main.qml:1730
+#: contents/ui/main.qml:1731
 msgctxt "@info:status"
 msgid "Add a sport in the widget settings."
 msgstr "Добавете спорт в настройките на приспособлението."
@@ -193,16 +203,16 @@ msgctxt "@item:inlistbox"
 msgid "Akonadi (unstable, not recommended)"
 msgstr "Akonadi (нестабилно, не се препоръчва)"
 
-#: contents/ui/config/ConfigSport.qml:378
-#: contents/ui/config/ConfigSport.qml:398
-#: contents/ui/config/ConfigSport.qml:429
-#: contents/ui/config/SportWizardPage.qml:414 contents/ui/main.qml:113
-#: contents/ui/main.qml:605 contents/ui/main.qml:954 contents/ui/main.qml:2194
+#: contents/ui/config/ConfigSport.qml:379
+#: contents/ui/config/ConfigSport.qml:399
+#: contents/ui/config/ConfigSport.qml:430
+#: contents/ui/config/SportWizardPage.qml:414 contents/ui/main.qml:114
+#: contents/ui/main.qml:606 contents/ui/main.qml:955 contents/ui/main.qml:2195
 msgctxt "@label"
 msgid "All competitions"
 msgstr "Всички турнири"
 
-#: contents/ui/config/ConfigSport.qml:215
+#: contents/ui/config/ConfigSport.qml:216
 #: contents/ui/config/SportWizardPage.qml:139
 msgctxt "@label"
 msgid "All countries"
@@ -323,7 +333,7 @@ msgctxt "@title:window"
 msgid "Choose Panel Font"
 msgstr "Избор на шрифт за панела"
 
-#: contents/ui/main.qml:2633
+#: contents/ui/main.qml:2634
 msgctxt "@info:status"
 msgid "Choose a competition to show a table."
 msgstr "Изберете турнир, за да видите таблица."
@@ -359,7 +369,7 @@ msgctxt "@action:button"
 msgid "Close"
 msgstr "Затваряне"
 
-#: contents/ui/main.qml:954
+#: contents/ui/main.qml:955
 msgctxt "@label"
 msgid "Combined scope"
 msgstr "Комбиниран обхват"
@@ -424,6 +434,26 @@ msgstr "Персонализирано…"
 msgctxt "@label:abbreviation games drawn"
 msgid "D"
 msgstr "Р"
+
+#: contents/code/providers/SportScoreSports.js:176
+msgctxt "Abbreviation for 'drawn' in a football/soccer standings table, keep very short"
+msgid "D"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:155
+msgctxt "Abbreviation for 'goal differential' in a hockey standings table, keep very short"
+msgid "DIFF"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:169
+msgctxt "Abbreviation for 'point differential' in an American football standings table, keep very short"
+msgid "DIFF"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:142
+msgctxt "Abbreviation for 'run differential' in a baseball standings table, keep very short"
+msgid "DIFF"
+msgstr ""
 
 #: contents/ui/config/tabs/AppearancePanelTab.qml:244
 msgctxt "@item:inlistbox stack separator"
@@ -501,6 +531,11 @@ msgctxt "@action:button"
 msgid "Download plugin"
 msgstr "Изтегляне на приставка"
 
+#: contents/code/providers/SportScoreSports.js:176
+msgctxt "@info:tooltip"
+msgid "Drawn"
+msgstr ""
+
 #: contents/ui/FullRepresentation.qml:1510
 msgctxt "@label"
 msgid "Drawn"
@@ -563,12 +598,12 @@ msgctxt "@option:check"
 msgid "Enabled"
 msgstr "Включено"
 
-#: contents/ui/main.qml:3240
+#: contents/ui/main.qml:3250
 msgctxt "@title:notification"
 msgid "Extra time"
 msgstr "Продължение"
 
-#: contents/ui/main.qml:3243
+#: contents/ui/main.qml:3253
 msgctxt "@title:notification"
 msgid "Extra time: second half"
 msgstr "Продължение: втора част"
@@ -577,6 +612,11 @@ msgstr "Продължение: втора част"
 msgctxt "@label:abbreviation goals for"
 msgid "F"
 msgstr "В"
+
+#: contents/code/providers/SportScoreSports.js:178
+msgctxt "Abbreviation for 'goals for' in a football/soccer standings table, keep very short"
+msgid "F"
+msgstr ""
 
 #: contents/ui/config/tabs/NotificationsAlertsTab.qml:144
 msgctxt "@option:check"
@@ -628,7 +668,7 @@ msgctxt "@label:spinbox"
 msgid "Full refresh:"
 msgstr "Пълно обновяване:"
 
-#: contents/ui/main.qml:3237
+#: contents/ui/main.qml:3247
 msgctxt "@title:notification"
 msgid "Full-time"
 msgstr "Край на мача"
@@ -638,15 +678,56 @@ msgctxt "@option:check"
 msgid "Full-time result"
 msgstr "Краен резултат"
 
+#: contents/code/providers/SportScoreSports.js:154
+msgctxt "Abbreviation for 'goals against' in a hockey standings table, keep very short"
+msgid "GA"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:139
+msgctxt "Abbreviation for 'games behind' in a baseball standings table, keep very short"
+msgid "GB"
+msgstr ""
+
 #: contents/ui/FullRepresentation.qml:1533
 msgctxt "@label"
 msgid "GD"
 msgstr "РГ"
 
-#: contents/ui/main.qml:3228 contents/ui/main.qml:3260
+#: contents/code/providers/SportScoreSports.js:180
+msgctxt "Abbreviation for 'goal difference' in a football/soccer standings table, keep very short"
+msgid "GD"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:153
+msgctxt "Abbreviation for 'goals for' in a hockey standings table, keep very short"
+msgid "GF"
+msgstr ""
+
+#: contents/ui/main.qml:3238 contents/ui/main.qml:3270
 msgctxt "@title:notification"
 msgid "GOAL"
 msgstr "ГОЛ"
+
+#: contents/code/providers/SportScoreSports.js:113
+msgctxt "Abbreviation for 'games played' in a basketball standings table, keep very short"
+msgid "GP"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:149
+msgctxt "Abbreviation for 'games played' in a hockey standings table, keep very short"
+msgid "GP"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:139
+msgctxt "@info:tooltip"
+msgid "Games behind"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:113
+#: contents/code/providers/SportScoreSports.js:149
+msgctxt "@info:tooltip"
+msgid "Games played"
+msgstr ""
 
 #: contents/config/config.qml:28
 msgid "General"
@@ -672,6 +753,16 @@ msgctxt "@label"
 msgid "Goal Difference"
 msgstr "Голова разлика"
 
+#: contents/code/providers/SportScoreSports.js:180
+msgctxt "@info:tooltip"
+msgid "Goal difference"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:155
+msgctxt "@info:tooltip"
+msgid "Goal differential"
+msgstr ""
+
 #: contents/ui/FullRepresentation.qml:1528
 msgctxt "@label"
 msgid "Goals Against"
@@ -682,12 +773,24 @@ msgctxt "@label"
 msgid "Goals For"
 msgstr "Голове отбелязани"
 
+#: contents/code/providers/SportScoreSports.js:154
+#: contents/code/providers/SportScoreSports.js:179
+msgctxt "@info:tooltip"
+msgid "Goals against"
+msgstr ""
+
 #: contents/ui/config/tabs/NotificationsAlertsTab.qml:68
 msgctxt "@option:check"
 msgid "Goals and score changes"
 msgstr "Голове и промени в резултата"
 
-#: contents/ui/main.qml:3231
+#: contents/code/providers/SportScoreSports.js:153
+#: contents/code/providers/SportScoreSports.js:178
+msgctxt "@info:tooltip"
+msgid "Goals for"
+msgstr ""
+
+#: contents/ui/main.qml:3241
 msgctxt "@title:notification"
 msgid "Half-time"
 msgstr "Полувреме"
@@ -747,7 +850,7 @@ msgctxt "@tab:match details"
 msgid "Information"
 msgstr "Информация"
 
-#: contents/ui/main.qml:3225
+#: contents/ui/main.qml:3235
 msgctxt "@title:notification"
 msgid "Kick-off"
 msgstr "Начало на мача"
@@ -761,6 +864,16 @@ msgstr "Начало (мачът става на живо)"
 msgctxt "@label:abbreviation games lost"
 msgid "L"
 msgstr "З"
+
+#: contents/code/providers/SportScoreSports.js:115
+#: contents/code/providers/SportScoreSports.js:126
+#: contents/code/providers/SportScoreSports.js:137
+#: contents/code/providers/SportScoreSports.js:151
+#: contents/code/providers/SportScoreSports.js:164
+#: contents/code/providers/SportScoreSports.js:177
+msgctxt "Abbreviation for 'lost' in a standings table, keep very short"
+msgid "L"
+msgstr ""
 
 #: contents/ui/config/tabs/AppearanceWidgetTab.qml:85
 msgctxt "@label:listbox"
@@ -798,8 +911,8 @@ msgstr "На живо"
 
 #: contents/ui/CompactRepresentation.qml:115
 #: contents/ui/CompactRepresentation.qml:666
-#: contents/ui/FullRepresentation.qml:1147 contents/ui/main.qml:1138
-#: contents/ui/main.qml:1142 contents/ui/main.qml:1159
+#: contents/ui/FullRepresentation.qml:1147 contents/ui/main.qml:1139
+#: contents/ui/main.qml:1143 contents/ui/main.qml:1160
 #: contents/ui/MatchesToolTip.qml:121 contents/ui/MatchesToolTip.qml:126
 #: contents/ui/MatchesToolTip.qml:130 contents/ui/ScoreDelegate.qml:187
 msgctxt "@info:live match status"
@@ -816,7 +929,7 @@ msgctxt "@title:tab"
 msgid "Live"
 msgstr "На живо"
 
-#: contents/ui/main.qml:1142 contents/ui/MatchesToolTip.qml:121
+#: contents/ui/main.qml:1143 contents/ui/MatchesToolTip.qml:121
 #: contents/ui/MatchesToolTip.qml:130
 msgctxt "@info:live match status"
 msgid "Live %1"
@@ -918,10 +1031,25 @@ msgctxt "@info"
 msgid "Loading teams…"
 msgstr "Зареждане на отбори…"
 
+#: contents/code/providers/SportScoreSports.js:115
+#: contents/code/providers/SportScoreSports.js:126
+#: contents/code/providers/SportScoreSports.js:137
+#: contents/code/providers/SportScoreSports.js:151
+#: contents/code/providers/SportScoreSports.js:164
+#: contents/code/providers/SportScoreSports.js:177
+msgctxt "@info:tooltip"
+msgid "Lost"
+msgstr ""
+
 #: contents/ui/FullRepresentation.qml:1516
 msgctxt "@label"
 msgid "Lost"
 msgstr "Загуби"
+
+#: contents/code/providers/SportScoreSports.js:124
+msgctxt "Abbreviation for 'matches played' in a cricket standings table, keep very short"
+msgid "M"
+msgstr ""
 
 #: contents/ui/config/tabs/AppearancePanelTab.qml:271
 msgctxt "@item:inlistbox"
@@ -956,6 +1084,11 @@ msgctxt "@label:spinbox"
 msgid "Matches per team/competition:"
 msgstr "Мачове за отбор/турнир:"
 
+#: contents/code/providers/SportScoreSports.js:124
+msgctxt "@info:tooltip"
+msgid "Matches played"
+msgstr ""
+
 #: contents/ui/config/tabs/NotificationsCompetitionsTab.qml:208
 msgctxt "@info"
 msgid "Matches you enabled the bell icon for in the widget. They are notified even if their competition is not included above, and are cleaned up automatically once the match has finished."
@@ -975,6 +1108,11 @@ msgstr "Разни"
 msgctxt "@label:listbox"
 msgid "Multiple matches:"
 msgstr "Няколко мача:"
+
+#: contents/code/providers/SportScoreSports.js:128
+msgctxt "Abbreviation for 'no result' in a cricket standings table, keep very short"
+msgid "NR"
+msgstr ""
 
 #: contents/ui/config/ConfigGeneral.qml:219
 msgctxt "@label:chooser"
@@ -1002,7 +1140,7 @@ msgctxt "@item:inlistbox scheduled matches window"
 msgid "Next 24 hours"
 msgstr "Следващите 24 часа"
 
-#: contents/ui/main.qml:128
+#: contents/ui/main.qml:129
 msgctxt "@info:status"
 msgid "No API key required"
 msgstr "Не се изисква API ключ"
@@ -1029,13 +1167,13 @@ msgctxt "@info"
 msgid "No countries were found for this sport."
 msgstr "Не са намерени държави за този спорт."
 
-#: contents/ui/config/ConfigSport.qml:213
+#: contents/ui/config/ConfigSport.qml:214
 #: contents/ui/config/SportWizardPage.qml:137
 msgctxt "@label"
 msgid "No country selected"
 msgstr "Няма избрана държава"
 
-#: contents/ui/config/ConfigSport.qml:196
+#: contents/ui/config/ConfigSport.qml:197
 msgctxt "@label"
 msgid "No favorite team"
 msgstr "Няма любим отбор"
@@ -1045,7 +1183,7 @@ msgctxt "@info:placeholder"
 msgid "No individual matches yet. Click the bell icon on a match row in the widget to add one."
 msgstr "Все още няма отделни мачове. Натиснете иконата със звънец на ред с мач в приспособлението, за да добавите такъв."
 
-#: contents/ui/config/ConfigSport.qml:238
+#: contents/ui/config/ConfigSport.qml:239
 #: contents/ui/config/SportWizardPage.qml:153
 msgctxt "@label"
 msgid "No league selected"
@@ -1128,7 +1266,12 @@ msgctxt "@info:placeholder"
 msgid "No recent results for %1"
 msgstr "Няма скорошни резултати за %1"
 
-#: contents/ui/main.qml:1902 contents/ui/main.qml:1919
+#: contents/code/providers/SportScoreSports.js:128
+msgctxt "@info:tooltip"
+msgid "No result"
+msgstr ""
+
+#: contents/ui/main.qml:1903 contents/ui/main.qml:1920
 msgctxt "@info:status"
 msgid "No saved items are enabled for Schedules."
 msgstr "Няма запазени елементи, включени за разписания."
@@ -1138,7 +1281,7 @@ msgctxt "@info:placeholder"
 msgid "No scheduled matches"
 msgstr "Няма насрочени мачове"
 
-#: contents/ui/main.qml:220
+#: contents/ui/main.qml:221
 msgctxt "@info:status"
 msgid "No scheduled matches"
 msgstr "Няма насрочени мачове"
@@ -1148,12 +1291,12 @@ msgctxt "@info:placeholder"
 msgid "No scheduled matches for %1"
 msgstr "Няма насрочени мачове за %1"
 
-#: contents/ui/main.qml:1219
+#: contents/ui/main.qml:1220
 msgctxt "@info:status"
 msgid "No scheduled matches for %1."
 msgstr "Няма насрочени мачове за %1."
 
-#: contents/ui/main.qml:1221
+#: contents/ui/main.qml:1222
 msgctxt "@info:status"
 msgid "No scheduled matches for your saved sports."
 msgstr "Няма насрочени мачове за запазените ви спортове."
@@ -1163,7 +1306,7 @@ msgctxt "@info:status"
 msgid "No schedules"
 msgstr "Няма разписания"
 
-#: contents/ui/config/ConfigSport.qml:206
+#: contents/ui/config/ConfigSport.qml:207
 msgctxt "@label"
 msgid "No sport selected"
 msgstr "Няма избран спорт"
@@ -1183,13 +1326,13 @@ msgctxt "@info:placeholder"
 msgid "No table data"
 msgstr "Няма данни за таблица"
 
-#: contents/ui/main.qml:1843 contents/ui/main.qml:2648
-#: contents/ui/main.qml:2679
+#: contents/ui/main.qml:1844 contents/ui/main.qml:2649
+#: contents/ui/main.qml:2680
 msgctxt "@info:status"
 msgid "No table rows returned for %1."
 msgstr "Не са върнати редове от таблица за %1."
 
-#: contents/ui/main.qml:1816
+#: contents/ui/main.qml:1817
 msgctxt "@info:status"
 msgid "No table scope enabled."
 msgstr "Няма включен обхват за таблица."
@@ -1260,6 +1403,11 @@ msgctxt "@label:chooser"
 msgid "Notify on:"
 msgstr "Известяване при:"
 
+#: contents/code/providers/SportScoreSports.js:152
+msgctxt "Abbreviation for 'overtime/shootout losses' in a hockey standings table, keep very short"
+msgid "OTL"
+msgstr ""
+
 #: contents/ui/config/tabs/NotificationsCalendarTab.qml:88
 msgctxt "@item:inlistbox"
 msgid "Off"
@@ -1308,15 +1456,50 @@ msgctxt "@info"
 msgid "Open a region to follow its tennis competitions and players."
 msgstr "Отворете регион, за да следите неговите тенис турнири и играчи."
 
-#: contents/ui/main.qml:3110
+#: contents/ui/main.qml:3111
 msgctxt "@action:button"
 msgid "Open match"
 msgstr "Отваряне на мача"
 
-#: contents/ui/main.qml:144
+#: contents/ui/main.qml:145
 msgctxt "@info:status"
 msgid "Open settings to add a league"
 msgstr "Отворете настройките, за да добавите лига"
+
+#: contents/code/providers/SportScoreSports.js:152
+msgctxt "@info:tooltip"
+msgid "Overtime/shootout losses"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:117
+msgctxt "Abbreviation for 'points against' in a basketball standings table, keep very short"
+msgid "PA"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:168
+msgctxt "Abbreviation for 'points against' in an American football standings table, keep very short"
+msgid "PA"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:138
+msgctxt "Abbreviation for 'win percentage' in a baseball standings table, keep very short"
+msgid "PCT"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:166
+msgctxt "Abbreviation for 'win percentage' in an American football standings table, keep very short"
+msgid "PCT"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:116
+msgctxt "Abbreviation for 'points for' in a basketball standings table, keep very short"
+msgid "PF"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:167
+msgctxt "Abbreviation for 'points for' in an American football standings table, keep very short"
+msgid "PF"
+msgstr ""
 
 #: contents/ui/config/SavedLeaguesList.qml:572
 msgctxt "@option:check"
@@ -1348,7 +1531,12 @@ msgctxt "@label:listbox"
 msgid "Panel mode:"
 msgstr "Режим на панела:"
 
-#: contents/ui/main.qml:3246
+#: contents/code/providers/SportScoreSports.js:119
+msgctxt "Abbreviation for 'win percentage' in a basketball standings table, keep very short"
+msgid "Pct"
+msgstr ""
+
+#: contents/ui/main.qml:3256
 msgctxt "@title:notification"
 msgid "Penalty shootout"
 msgstr "Дузпи"
@@ -1363,7 +1551,7 @@ msgctxt "@info"
 msgid "Pick a sport to start. Next you can follow the most popular competitions worldwide, or browse every country and league."
 msgstr "Изберете спорт, за да започнете. След това можете да следите най-популярните турнири в света или да разгледате всяка държава и лига."
 
-#: contents/ui/main.qml:1422
+#: contents/ui/main.qml:1423
 msgctxt "@info %2 and %3 are team names"
 msgid "Pinned %2 vs %3 to the panel - the previously pinned match was unpinned."
 msgid_plural "Pinned %2 vs %3 to the panel - %1 previously pinned matches were unpinned."
@@ -1379,6 +1567,16 @@ msgstr "Закачен в панела - натиснете, за да отка�
 msgctxt "@label:abbreviation games played"
 msgid "Pl"
 msgstr "И"
+
+#: contents/code/providers/SportScoreSports.js:174
+msgctxt "Abbreviation for 'played' in a football/soccer standings table, keep very short"
+msgid "Pl"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:174
+msgctxt "@info:tooltip"
+msgid "Played"
+msgstr ""
 
 #: contents/ui/FullRepresentation.qml:1498
 msgctxt "@label"
@@ -1405,10 +1603,35 @@ msgctxt "@title:section"
 msgid "Players"
 msgstr "Играчи"
 
+#: contents/code/providers/SportScoreSports.js:118
+#: contents/code/providers/SportScoreSports.js:169
+msgctxt "@info:tooltip"
+msgid "Point differential"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:129
+#: contents/code/providers/SportScoreSports.js:156
+#: contents/code/providers/SportScoreSports.js:181
+msgctxt "@info:tooltip"
+msgid "Points"
+msgstr ""
+
 #: contents/ui/FullRepresentation.qml:1540
 msgctxt "@label"
 msgid "Points"
 msgstr "Точки"
+
+#: contents/code/providers/SportScoreSports.js:117
+#: contents/code/providers/SportScoreSports.js:168
+msgctxt "@info:tooltip"
+msgid "Points against"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:116
+#: contents/code/providers/SportScoreSports.js:167
+msgctxt "@info:tooltip"
+msgid "Points for"
+msgstr ""
 
 #: contents/ui/config/tabs/NotificationsAlertsTab.qml:107
 msgctxt "@info"
@@ -1429,6 +1652,23 @@ msgstr "Преглед:"
 msgctxt "@label:abbreviation points"
 msgid "Pts"
 msgstr "Т"
+
+#: contents/code/providers/SportScoreSports.js:129
+#: contents/code/providers/SportScoreSports.js:156
+#: contents/code/providers/SportScoreSports.js:181
+msgctxt "Abbreviation for 'points' in a standings table, keep very short"
+msgid "Pts"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:141
+msgctxt "Abbreviation for 'runs against' in a baseball standings table, keep very short"
+msgid "RA"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:140
+msgctxt "Abbreviation for 'runs scored' in a baseball standings table, keep very short"
+msgid "RS"
+msgstr ""
 
 #: contents/ui/MatchesToolTip.qml:194
 msgctxt "@title:group"
@@ -1459,12 +1699,12 @@ msgctxt "@label:spinbox"
 msgid "Recent results days back:"
 msgstr "Дни назад за скорошни резултати:"
 
-#: contents/ui/main.qml:3267
+#: contents/ui/main.qml:3277
 msgctxt "@title:notification"
 msgid "Red card"
 msgstr "Червен картон"
 
-#: contents/ui/main.qml:4228
+#: contents/ui/main.qml:4311
 msgctxt "@action"
 msgid "Refresh"
 msgstr "Обновяване"
@@ -1540,12 +1780,27 @@ msgctxt "@label:spinbox"
 msgid "Rotation interval:"
 msgstr "Интервал на смяна:"
 
+#: contents/code/providers/SportScoreSports.js:142
+msgctxt "@info:tooltip"
+msgid "Run differential"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:141
+msgctxt "@info:tooltip"
+msgid "Runs against"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:140
+msgctxt "@info:tooltip"
+msgid "Runs scored"
+msgstr ""
+
 #: contents/ui/config/SportWizardPage.qml:860
 msgctxt "@action:button"
 msgid "Save"
 msgstr "Запазване"
 
-#: contents/ui/main.qml:948
+#: contents/ui/main.qml:949
 msgctxt "@label"
 msgid "Saved Teams"
 msgstr "Запазени отбори"
@@ -1610,7 +1865,7 @@ msgctxt "@label"
 msgid "Season:"
 msgstr "Сезон:"
 
-#: contents/ui/main.qml:3234
+#: contents/ui/main.qml:3244
 msgctxt "@title:notification"
 msgid "Second half"
 msgstr "Втора част"
@@ -1725,11 +1980,11 @@ msgctxt "@info"
 msgid "SportScore is not responding right now, so this country's competitions could not be loaded. Please try again later."
 msgstr "SportScore не отговаря в момента, затова турнирите на тази държава не можаха да бъдат заредени. Опитайте отново по-късно."
 
-#: contents/ui/main.qml:4182
+#: contents/ui/main.qml:4192
 msgid "Sports Widget for Plasma"
 msgstr "Sports Widget for Plasma"
 
-#: contents/ui/main.qml:3459
+#: contents/ui/main.qml:3469
 msgctxt "@title calendar name"
 msgid "Sports Widget for Plasma upcoming matches"
 msgstr "Предстоящи мачове от Sports Widget for Plasma"
@@ -1739,7 +1994,7 @@ msgctxt "@label:football lineups"
 msgid "Starting lineups"
 msgstr "Стартови състави"
 
-#: contents/ui/main.qml:3249
+#: contents/ui/main.qml:3259
 msgctxt "@title:notification"
 msgid "Starts in %1 minute"
 msgid_plural "Starts in %1 minutes"
@@ -1761,7 +2016,7 @@ msgctxt "@label:football lineups"
 msgid "Substitutes"
 msgstr "Резерви"
 
-#: contents/ui/main.qml:3270
+#: contents/ui/main.qml:3280
 msgctxt "@title:notification"
 msgid "Substitution"
 msgstr "Смяна"
@@ -1776,8 +2031,18 @@ msgctxt "@info:font preview"
 msgid "System font"
 msgstr "Системен шрифт"
 
-#: contents/ui/main.qml:4507 contents/ui/main.qml:4508
-#: contents/ui/main.qml:4535 contents/ui/main.qml:4566
+#: contents/code/providers/SportScoreSports.js:127
+msgctxt "Abbreviation for 'tied or drawn' in a cricket standings table, keep very short"
+msgid "T"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:165
+msgctxt "Abbreviation for 'tied' in an American football standings table, keep very short"
+msgid "T"
+msgstr ""
+
+#: contents/ui/main.qml:4590 contents/ui/main.qml:4591
+#: contents/ui/main.qml:4618 contents/ui/main.qml:4649
 msgctxt "@info:status"
 msgid "Table request timed out."
 msgstr "Заявката за таблица изтече."
@@ -1886,6 +2151,16 @@ msgctxt "@item:inlistbox stack separator"
 msgid "Thin line"
 msgstr "Тънка линия"
 
+#: contents/code/providers/SportScoreSports.js:165
+msgctxt "@info:tooltip"
+msgid "Tied"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:127
+msgctxt "@info:tooltip"
+msgid "Tied or drawn"
+msgstr ""
+
 #: contents/ui/config/tabs/AppearanceMiscTab.qml:136
 msgctxt "@label:listbox"
 msgid "Time format:"
@@ -1959,12 +2234,12 @@ msgctxt "@option:check"
 msgid "Update separately"
 msgstr "Отделно обновяване"
 
-#: contents/ui/main.qml:1124
+#: contents/ui/main.qml:1125
 msgctxt "@info:status"
 msgid "Updated"
 msgstr "Обновено"
 
-#: contents/ui/main.qml:1124
+#: contents/ui/main.qml:1125
 msgctxt "@info:status"
 msgid "Updated %1"
 msgstr "Обновено %1"
@@ -1979,7 +2254,7 @@ msgctxt "@info:status"
 msgid "Updating table"
 msgstr "Обновяване на таблицата"
 
-#: contents/ui/main.qml:219 contents/ui/MatchesToolTip.qml:214
+#: contents/ui/main.qml:220 contents/ui/MatchesToolTip.qml:214
 msgctxt "@info:status"
 msgid "Updating…"
 msgstr "Обновяване…"
@@ -2004,6 +2279,16 @@ msgctxt "@label:abbreviation games won"
 msgid "W"
 msgstr "П"
 
+#: contents/code/providers/SportScoreSports.js:114
+#: contents/code/providers/SportScoreSports.js:125
+#: contents/code/providers/SportScoreSports.js:136
+#: contents/code/providers/SportScoreSports.js:150
+#: contents/code/providers/SportScoreSports.js:163
+#: contents/code/providers/SportScoreSports.js:175
+msgctxt "Abbreviation for 'won' in a standings table, keep very short"
+msgid "W"
+msgstr ""
+
 #: contents/ui/FullRepresentation.qml:1006
 msgctxt "@info:status"
 msgid "Waiting for update"
@@ -2019,12 +2304,29 @@ msgctxt "@label:listbox"
 msgid "Widget panel area:"
 msgstr "Област на панела на приспособлението:"
 
+#: contents/code/providers/SportScoreSports.js:119
+#: contents/code/providers/SportScoreSports.js:138
+#: contents/code/providers/SportScoreSports.js:166
+msgctxt "@info:tooltip"
+msgid "Win percentage"
+msgstr ""
+
+#: contents/code/providers/SportScoreSports.js:114
+#: contents/code/providers/SportScoreSports.js:125
+#: contents/code/providers/SportScoreSports.js:136
+#: contents/code/providers/SportScoreSports.js:150
+#: contents/code/providers/SportScoreSports.js:163
+#: contents/code/providers/SportScoreSports.js:175
+msgctxt "@info:tooltip"
+msgid "Won"
+msgstr ""
+
 #: contents/ui/FullRepresentation.qml:1504
 msgctxt "@label"
 msgid "Won"
 msgstr "Победи"
 
-#: contents/ui/main.qml:3264
+#: contents/ui/main.qml:3274
 msgctxt "@title:notification"
 msgid "Yellow card"
 msgstr "Жълт картон"

@@ -99,79 +99,86 @@ function defaultCountryOptions(sport) {
     }];
 }
 
-function standingsColumns(sport) {
+// `i18nc` is passed in by the caller (e.g. `SportScoreSports.standingsColumns(sport,
+// i18nc)` from a .qml file) rather than called directly from this file. This file
+// is `.pragma library`, which runs without a QQmlContext, so the global i18n/i18nc
+// functions that KLocalizedContext exposes are NOT reachable from in here - calling
+// them directly would silently return undefined/throw. Accepting the function as a
+// parameter keeps the resolution happening on the QML side where it works, while
+// keeping all the per-sport column layout logic in one place.
+function standingsColumns(sport, i18nc) {
     const value = normalizedSport(sport);
     if (value === "basketball") {
         return [
-            column("played", "GP", "Games played", 2.4),
-            column("won", "W", "Won", 2),
-            column("lost", "L", "Lost", 2),
-            column("pointsFor", "PF", "Points for", 2.2),
-            column("pointsAgainst", "PA", "Points against", 2.4),
-            column("pointDifference", "+/-", "Point differential", 2.2),
-            column("percentage", "Pct", "Win percentage", 3, true)
+            column("played", i18nc("Abbreviation for 'games played' in a basketball standings table, keep very short", "GP"), i18nc("@info:tooltip", "Games played"), 2.4),
+            column("won", i18nc("Abbreviation for 'won' in a standings table, keep very short", "W"), i18nc("@info:tooltip", "Won"), 2),
+            column("lost", i18nc("Abbreviation for 'lost' in a standings table, keep very short", "L"), i18nc("@info:tooltip", "Lost"), 2),
+            column("pointsFor", i18nc("Abbreviation for 'points for' in a basketball standings table, keep very short", "PF"), i18nc("@info:tooltip", "Points for"), 2.2),
+            column("pointsAgainst", i18nc("Abbreviation for 'points against' in a basketball standings table, keep very short", "PA"), i18nc("@info:tooltip", "Points against"), 2.4),
+            column("pointDifference", i18nc("Abbreviation for 'point differential' in a basketball standings table, keep very short", "+/-"), i18nc("@info:tooltip", "Point differential"), 2.2),
+            column("percentage", i18nc("Abbreviation for 'win percentage' in a basketball standings table, keep very short", "Pct"), i18nc("@info:tooltip", "Win percentage"), 3, true)
         ];
     }
     if (value === "cricket") {
         return [
-            column("played", "M", "Matches played", 2.4),
-            column("won", "W", "Won", 2),
-            column("lost", "L", "Lost", 2),
-            column("tied", "T", "Tied or drawn", 2),
-            column("noResult", "NR", "No result", 2.2),
-            column("points", "Pts", "Points", 2.8, true)
+            column("played", i18nc("Abbreviation for 'matches played' in a cricket standings table, keep very short", "M"), i18nc("@info:tooltip", "Matches played"), 2.4),
+            column("won", i18nc("Abbreviation for 'won' in a standings table, keep very short", "W"), i18nc("@info:tooltip", "Won"), 2),
+            column("lost", i18nc("Abbreviation for 'lost' in a standings table, keep very short", "L"), i18nc("@info:tooltip", "Lost"), 2),
+            column("tied", i18nc("Abbreviation for 'tied or drawn' in a cricket standings table, keep very short", "T"), i18nc("@info:tooltip", "Tied or drawn"), 2),
+            column("noResult", i18nc("Abbreviation for 'no result' in a cricket standings table, keep very short", "NR"), i18nc("@info:tooltip", "No result"), 2.2),
+            column("points", i18nc("Abbreviation for 'points' in a standings table, keep very short", "Pts"), i18nc("@info:tooltip", "Points"), 2.8, true)
         ];
     }
     // Baseball has no draws and no league points: teams are ranked by win pct, with
     // games-behind the leader. Runs scored/against stand in for goals for/against.
     if (value === "baseball") {
         return [
-            column("won", "W", "Won", 2),
-            column("lost", "L", "Lost", 2),
-            column("winPercent", "PCT", "Win percentage", 2.8, true),
-            column("gamesBehind", "GB", "Games behind", 2.4),
-            column("goalsFor", "RS", "Runs scored", 2.4),
-            column("goalsAgainst", "RA", "Runs against", 2.4),
-            column("goalDifference", "DIFF", "Run differential", 2.6)
+            column("won", i18nc("Abbreviation for 'won' in a standings table, keep very short", "W"), i18nc("@info:tooltip", "Won"), 2),
+            column("lost", i18nc("Abbreviation for 'lost' in a standings table, keep very short", "L"), i18nc("@info:tooltip", "Lost"), 2),
+            column("winPercent", i18nc("Abbreviation for 'win percentage' in a baseball standings table, keep very short", "PCT"), i18nc("@info:tooltip", "Win percentage"), 2.8, true),
+            column("gamesBehind", i18nc("Abbreviation for 'games behind' in a baseball standings table, keep very short", "GB"), i18nc("@info:tooltip", "Games behind"), 2.4),
+            column("goalsFor", i18nc("Abbreviation for 'runs scored' in a baseball standings table, keep very short", "RS"), i18nc("@info:tooltip", "Runs scored"), 2.4),
+            column("goalsAgainst", i18nc("Abbreviation for 'runs against' in a baseball standings table, keep very short", "RA"), i18nc("@info:tooltip", "Runs against"), 2.4),
+            column("goalDifference", i18nc("Abbreviation for 'run differential' in a baseball standings table, keep very short", "DIFF"), i18nc("@info:tooltip", "Run differential"), 2.6)
         ];
     }
     // Ice hockey standings have no draws: a game decided in overtime/shootout counts
     // as an OT loss (OTL), worth a point. Ranked by points, then goals for/against.
     if (value === "hockey") {
         return [
-            column("played", "GP", "Games played", 2.4),
-            column("won", "W", "Won", 2),
-            column("lost", "L", "Lost", 2),
-            column("otLosses", "OTL", "Overtime/shootout losses", 2.6),
-            column("goalsFor", "GF", "Goals for", 2.2),
-            column("goalsAgainst", "GA", "Goals against", 2.4),
-            column("goalDifference", "DIFF", "Goal differential", 2.6),
-            column("points", "Pts", "Points", 2.8, true)
+            column("played", i18nc("Abbreviation for 'games played' in a hockey standings table, keep very short", "GP"), i18nc("@info:tooltip", "Games played"), 2.4),
+            column("won", i18nc("Abbreviation for 'won' in a standings table, keep very short", "W"), i18nc("@info:tooltip", "Won"), 2),
+            column("lost", i18nc("Abbreviation for 'lost' in a standings table, keep very short", "L"), i18nc("@info:tooltip", "Lost"), 2),
+            column("otLosses", i18nc("Abbreviation for 'overtime/shootout losses' in a hockey standings table, keep very short", "OTL"), i18nc("@info:tooltip", "Overtime/shootout losses"), 2.6),
+            column("goalsFor", i18nc("Abbreviation for 'goals for' in a hockey standings table, keep very short", "GF"), i18nc("@info:tooltip", "Goals for"), 2.2),
+            column("goalsAgainst", i18nc("Abbreviation for 'goals against' in a hockey standings table, keep very short", "GA"), i18nc("@info:tooltip", "Goals against"), 2.4),
+            column("goalDifference", i18nc("Abbreviation for 'goal differential' in a hockey standings table, keep very short", "DIFF"), i18nc("@info:tooltip", "Goal differential"), 2.6),
+            column("points", i18nc("Abbreviation for 'points' in a standings table, keep very short", "Pts"), i18nc("@info:tooltip", "Points"), 2.8, true)
         ];
     }
     // American football has no league points and is ranked by win pct. Ties are a
     // real (if rare) outcome, so the "T" column stays. Points for/against, not goals.
     if (value === "american-football") {
         return [
-            column("won", "W", "Won", 2),
-            column("lost", "L", "Lost", 2),
-            column("draw", "T", "Tied", 2),
-            column("winPercent", "PCT", "Win percentage", 2.8, true),
-            column("goalsFor", "PF", "Points for", 2.4),
-            column("goalsAgainst", "PA", "Points against", 2.4),
-            column("goalDifference", "DIFF", "Point differential", 2.6)
+            column("won", i18nc("Abbreviation for 'won' in a standings table, keep very short", "W"), i18nc("@info:tooltip", "Won"), 2),
+            column("lost", i18nc("Abbreviation for 'lost' in a standings table, keep very short", "L"), i18nc("@info:tooltip", "Lost"), 2),
+            column("draw", i18nc("Abbreviation for 'tied' in an American football standings table, keep very short", "T"), i18nc("@info:tooltip", "Tied"), 2),
+            column("winPercent", i18nc("Abbreviation for 'win percentage' in an American football standings table, keep very short", "PCT"), i18nc("@info:tooltip", "Win percentage"), 2.8, true),
+            column("goalsFor", i18nc("Abbreviation for 'points for' in an American football standings table, keep very short", "PF"), i18nc("@info:tooltip", "Points for"), 2.4),
+            column("goalsAgainst", i18nc("Abbreviation for 'points against' in an American football standings table, keep very short", "PA"), i18nc("@info:tooltip", "Points against"), 2.4),
+            column("goalDifference", i18nc("Abbreviation for 'point differential' in an American football standings table, keep very short", "DIFF"), i18nc("@info:tooltip", "Point differential"), 2.6)
         ];
     }
 
     return [
-        column("played", "Pl", "Played", 2.4),
-        column("won", "W", "Won", 2),
-        column("draw", "D", "Drawn", 2.2),
-        column("lost", "L", "Lost", 2),
-        column("goalsFor", "F", "Goals for", 2),
-        column("goalsAgainst", "A", "Goals against", 2.4),
-        column("goalDifference", "GD", "Goal difference", 2),
-        column("points", "Pts", "Points", 2.8, true)
+        column("played", i18nc("Abbreviation for 'played' in a football/soccer standings table, keep very short", "Pl"), i18nc("@info:tooltip", "Played"), 2.4),
+        column("won", i18nc("Abbreviation for 'won' in a standings table, keep very short", "W"), i18nc("@info:tooltip", "Won"), 2),
+        column("draw", i18nc("Abbreviation for 'drawn' in a football/soccer standings table, keep very short", "D"), i18nc("@info:tooltip", "Drawn"), 2.2),
+        column("lost", i18nc("Abbreviation for 'lost' in a standings table, keep very short", "L"), i18nc("@info:tooltip", "Lost"), 2),
+        column("goalsFor", i18nc("Abbreviation for 'goals for' in a football/soccer standings table, keep very short", "F"), i18nc("@info:tooltip", "Goals for"), 2),
+        column("goalsAgainst", i18nc("Abbreviation for 'goals against' in a football/soccer standings table, keep very short", "A"), i18nc("@info:tooltip", "Goals against"), 2.4),
+        column("goalDifference", i18nc("Abbreviation for 'goal difference' in a football/soccer standings table, keep very short", "GD"), i18nc("@info:tooltip", "Goal difference"), 2),
+        column("points", i18nc("Abbreviation for 'points' in a standings table, keep very short", "Pts"), i18nc("@info:tooltip", "Points"), 2.8, true)
     ];
 }
 

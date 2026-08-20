@@ -44,7 +44,7 @@ Item {
     property bool seasonLoading: false
     readonly property int rowCount: tableRows ? tableRows.length : 0
     readonly property var displayRows: groupedRows()
-    readonly property var tableColumns: SportScoreSports.standingsColumns(root.sport)
+    readonly property var tableColumns: SportScoreSports.standingsColumns(root.sport, i18nc)
     readonly property bool tableHasForm: SportScoreSports.standingsHasForm(root.sport)
     readonly property color tablePrimaryTextColor: Kirigami.Theme.textColor
     readonly property color tableSecondaryTextColor: Kirigami.Theme.disabledTextColor
