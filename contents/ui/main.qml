@@ -4236,6 +4236,36 @@ PlasmoidItem {
     readonly property string espnCurlStatusMarker: "__ESPN_CURL_STATUS__"
     property int espnCurlRequestCounter: 0
 
+    // ESPN curl requests used to fire immediately and unbounded: a refresh that
+    // needs several date-range variants across several tabs could spin up 5-11
+    // concurrent `Plasma5Support.DataSource` "executable" sources (each backing
+    // its own curl subprocess) at once. That caused two symptoms: plasmashell
+    // stalling (the executable engine's process bookkeeping runs on the main
+    // thread, so many sources connecting/tearing down together is expensive -
+    // most noticeable switching tabs, since that adds requests on top of
+    // whatever refresh is already in flight), and curl timeouts (`exit 28`,
+    // several concurrent curl processes competing for CPU/DNS/sockets miss the
+    // 14s -m budget). Cap how many run at once and queue the rest.
+    property var _espnQueue: []
+    property int _espnInFlight: 0
+    readonly property int _espnMaxConcurrent: 3
+
+    function pumpEspnQueue() {
+        while (root._espnInFlight < root._espnMaxConcurrent && root._espnQueue.length > 0) {
+            const job = root._espnQueue.shift();
+            root._espnInFlight += 1;
+            // TEMP DIAGNOSTIC (nhl-debug): this is the actual dispatch moment
+            // (connectSource really starting a curl subprocess). The existing
+            // "via injected ESPN requester" line in SportsApi.js fires at
+            // enqueue time, which can't tell you whether the cap is holding -
+            // this one can, via inFlight (should never exceed _espnMaxConcurrent)
+            // and queued (how many are still waiting their turn).
+            console.warn("[nhl-debug] pumpEspnQueue dispatching, inFlight:", root._espnInFlight, "/", root._espnMaxConcurrent, "queued:", root._espnQueue.length);
+            espnCurlSource.pending[job.command] = { onSuccess: job.onSuccess, onError: job.onError };
+            espnCurlSource.connectSource(job.command);
+        }
+    }
+
     // Single-quotes a string for safe inclusion as one shell argument (standard
     // POSIX technique: close the quote, escape the embedded quote, reopen it).
     function shellQuote(value) {
@@ -4250,6 +4280,9 @@ PlasmoidItem {
 
         onNewData: (sourceName, data) => {
             disconnectSource(sourceName);
+            root._espnInFlight = Math.max(0, root._espnInFlight - 1);
+            root.pumpEspnQueue();
+
             const callbacks = pending[sourceName];
             delete pending[sourceName];
             if (!callbacks) {
@@ -4293,8 +4326,8 @@ PlasmoidItem {
         const command = "REQ_ID=" + root.espnCurlRequestCounter + " curl -s -m 14 "
             + "-w " + root.shellQuote("\n" + root.espnCurlStatusMarker + ":%{http_code}") + " "
             + root.shellQuote(url);
-        espnCurlSource.pending[command] = { onSuccess: onSuccess, onError: onError };
-        espnCurlSource.connectSource(command);
+        root._espnQueue.push({ command: command, onSuccess: onSuccess, onError: onError });
+        root.pumpEspnQueue();
     }
 
     Component.onCompleted: {
@@ -4557,8 +4590,14 @@ PlasmoidItem {
         running: true
         onTriggered: {
             const now = Date.now();
-            if (root.lastWakeTickMs > 0 && (now - root.lastWakeTickMs) > root.wakeRefreshThresholdMs())
+            if (root.lastWakeTickMs > 0 && (now - root.lastWakeTickMs) > root.wakeRefreshThresholdMs()) {
+                // TEMP DIAGNOSTIC (nhl-debug): logs the exact detected sleep gap so
+                // it's unambiguous, from the log alone, whether a given burst of
+                // ESPN requests was triggered by a real resume-from-suspend versus
+                // an ordinary periodic refresh.
+                console.warn("[nhl-debug] wake detected, gap ms:", now - root.lastWakeTickMs);
                 root.handleSystemWake();
+            }
             root.lastWakeTickMs = now;
         }
     }

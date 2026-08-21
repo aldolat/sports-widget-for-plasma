@@ -108,10 +108,22 @@ function requestEspnText(url, onSuccess, onError) {
     const busted = cacheBustedUrl(url);
     // TEMP DIAGNOSTIC (nhl-debug): kept in per request while the ESPN 403
     // investigation is ongoing across all endpoints, not just teams.
+    // TEMP DIAGNOSTIC (nhl-debug): a short response can legitimately mean "no
+    // games today" (e.g. NHL/MLB off-season windows), or it can mean ESPN's edge
+    // returned an error/WAF block page through curl instead of real JSON. Log a
+    // preview so the two cases are distinguishable from the log alone rather than
+    // guessing from length.
+    function logEspnResponse(text) {
+        const value = stringValue(text);
+        console.warn("[nhl-debug] requestEspnText response length:", value.length);
+        if (value.length < 2000)
+            console.warn("[nhl-debug] requestEspnText short response preview:", value.slice(0, 300));
+    }
+
     if (_espnRequester) {
         console.warn("[nhl-debug] requestEspnText via injected ESPN requester (curl):", busted);
         _espnRequester(busted, text => {
-            console.warn("[nhl-debug] requestEspnText response length:", stringValue(text).length);
+            logEspnResponse(text);
             finish(onSuccess, text);
         }, error => {
             console.warn("[nhl-debug] requestEspnText onError fired:", error);
@@ -122,7 +134,7 @@ function requestEspnText(url, onSuccess, onError) {
 
     console.warn("[nhl-debug] requestEspnText via XHR fallback (no ESPN requester set):", busted);
     requestText(busted, text => {
-        console.warn("[nhl-debug] requestEspnText response length:", stringValue(text).length);
+        logEspnResponse(text);
         finish(onSuccess, text);
     }, error => {
         console.warn("[nhl-debug] requestEspnText onError fired:", error);
@@ -2722,8 +2734,8 @@ function espnSummaryStatsRows(home, away, sportValue) {
         return {
             kind: sportScoreStatKind(label),
             label,
-            homeValue: espnStatDisplay(name, homeDisplay, homeNum),
-            awayValue: espnStatDisplay(name, awayDisplay, awayNum),
+            homeValue: formatEspnMatchStatDisplay(name, homeDisplay, homeNum),
+            awayValue: formatEspnMatchStatDisplay(name, awayDisplay, awayNum),
             homeRaw: homeNum,
             awayRaw: awayNum,
             homeRatio: ratios.home,
@@ -2736,7 +2748,7 @@ function espnSummaryStatsRows(home, away, sportValue) {
 // percents: ESPN reports some as a 0..1 ratio (passPct 0.8 -> "80%") and some as an
 // already-scaled percent (fieldGoalPct 57 -> "57%"); both end up as "N%". Non-
 // percentage values pass through as ESPN formatted them (e.g. "47-82", "22:35").
-function espnStatDisplay(name, displayValue, num) {
+function formatEspnMatchStatDisplay(name, displayValue, num) {
     const text = stringValue(displayValue);
     if (EspnSports.isPercentStat(name)) {
         if (/%/.test(text))
