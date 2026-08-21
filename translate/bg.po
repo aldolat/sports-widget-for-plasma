@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sports Widget for Plasma\n"
 "Report-Msgid-Bugs-To: https://github.com/pnedyalkov91/sports-widget-for-plasma/issues\n"
-"POT-Creation-Date: 2026-08-20 08:50+0300\n"
+"POT-Creation-Date: 2026-08-21 11:54+0300\n"
 "PO-Revision-Date: 2026-07-02 18:06+0300\n"
 "Last-Translator: \n"
 "Language-Team: Bulgarian <kde-i18n-doc@kde.org>\n"
@@ -1704,7 +1704,7 @@ msgctxt "@title:notification"
 msgid "Red card"
 msgstr "Червен картон"
 
-#: contents/ui/main.qml:4311
+#: contents/ui/main.qml:4344
 msgctxt "@action"
 msgid "Refresh"
 msgstr "Обновяване"
@@ -2041,8 +2041,8 @@ msgctxt "Abbreviation for 'tied' in an American football standings table, keep v
 msgid "T"
 msgstr ""
 
-#: contents/ui/main.qml:4590 contents/ui/main.qml:4591
-#: contents/ui/main.qml:4618 contents/ui/main.qml:4649
+#: contents/ui/main.qml:4629 contents/ui/main.qml:4630
+#: contents/ui/main.qml:4657 contents/ui/main.qml:4688
 msgctxt "@info:status"
 msgid "Table request timed out."
 msgstr "Заявката за таблица изтече."
