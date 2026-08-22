@@ -85,7 +85,7 @@ msgstr "%1 срещу %2"
 #: contents/code/providers/SportScoreSports.js:118
 msgctxt "Abbreviation for 'point differential' in a basketball standings table, keep very short"
 msgid "+/-"
-msgstr ""
+msgstr "+/-"
 
 #: contents/ui/config/tabs/AppearanceMiscTab.qml:94
 msgctxt "@item:inlistbox"
@@ -140,7 +140,7 @@ msgstr "З"
 #: contents/code/providers/SportScoreSports.js:179
 msgctxt "Abbreviation for 'goals against' in a football/soccer standings table, keep very short"
 msgid "A"
-msgstr ""
+msgstr "Г"
 
 #: contents/ui/config/SavedLeaguesList.qml:349
 msgctxt "@action:button"
@@ -438,22 +438,22 @@ msgstr "Р"
 #: contents/code/providers/SportScoreSports.js:176
 msgctxt "Abbreviation for 'drawn' in a football/soccer standings table, keep very short"
 msgid "D"
-msgstr ""
+msgstr "Р"
 
 #: contents/code/providers/SportScoreSports.js:155
 msgctxt "Abbreviation for 'goal differential' in a hockey standings table, keep very short"
 msgid "DIFF"
-msgstr ""
+msgstr "РАЗЛ"
 
 #: contents/code/providers/SportScoreSports.js:169
 msgctxt "Abbreviation for 'point differential' in an American football standings table, keep very short"
 msgid "DIFF"
-msgstr ""
+msgstr "РАЗЛ"
 
 #: contents/code/providers/SportScoreSports.js:142
 msgctxt "Abbreviation for 'run differential' in a baseball standings table, keep very short"
 msgid "DIFF"
-msgstr ""
+msgstr "РАЗЛ"
 
 #: contents/ui/config/tabs/AppearancePanelTab.qml:244
 msgctxt "@item:inlistbox stack separator"
@@ -534,7 +534,7 @@ msgstr "Изтегляне на приставка"
 #: contents/code/providers/SportScoreSports.js:176
 msgctxt "@info:tooltip"
 msgid "Drawn"
-msgstr ""
+msgstr "Равен"
 
 #: contents/ui/FullRepresentation.qml:1510
 msgctxt "@label"
@@ -616,7 +616,7 @@ msgstr "В"
 #: contents/code/providers/SportScoreSports.js:178
 msgctxt "Abbreviation for 'goals for' in a football/soccer standings table, keep very short"
 msgid "F"
-msgstr ""
+msgstr "ЗА"
 
 #: contents/ui/config/tabs/NotificationsAlertsTab.qml:144
 msgctxt "@option:check"
@@ -681,12 +681,12 @@ msgstr "Краен резултат"
 #: contents/code/providers/SportScoreSports.js:154
 msgctxt "Abbreviation for 'goals against' in a hockey standings table, keep very short"
 msgid "GA"
-msgstr ""
+msgstr "Допуснати голове"
 
 #: contents/code/providers/SportScoreSports.js:139
 msgctxt "Abbreviation for 'games behind' in a baseball standings table, keep very short"
 msgid "GB"
-msgstr ""
+msgstr "Изоставане"
 
 #: contents/ui/FullRepresentation.qml:1533
 msgctxt "@label"
@@ -696,12 +696,12 @@ msgstr "РГ"
 #: contents/code/providers/SportScoreSports.js:180
 msgctxt "Abbreviation for 'goal difference' in a football/soccer standings table, keep very short"
 msgid "GD"
-msgstr ""
+msgstr "Голова разлика"
 
 #: contents/code/providers/SportScoreSports.js:153
 msgctxt "Abbreviation for 'goals for' in a hockey standings table, keep very short"
 msgid "GF"
-msgstr ""
+msgstr "Вкарани голове"
 
 #: contents/ui/main.qml:3238 contents/ui/main.qml:3270
 msgctxt "@title:notification"
@@ -711,23 +711,23 @@ msgstr "ГОЛ"
 #: contents/code/providers/SportScoreSports.js:113
 msgctxt "Abbreviation for 'games played' in a basketball standings table, keep very short"
 msgid "GP"
-msgstr ""
+msgstr "Играни"
 
 #: contents/code/providers/SportScoreSports.js:149
 msgctxt "Abbreviation for 'games played' in a hockey standings table, keep very short"
 msgid "GP"
-msgstr ""
+msgstr "Играни"
 
 #: contents/code/providers/SportScoreSports.js:139
 msgctxt "@info:tooltip"
 msgid "Games behind"
-msgstr ""
+msgstr "Изоставане"
 
 #: contents/code/providers/SportScoreSports.js:113
 #: contents/code/providers/SportScoreSports.js:149
 msgctxt "@info:tooltip"
 msgid "Games played"
-msgstr ""
+msgstr "Изиграни мачове"
 
 #: contents/config/config.qml:28
 msgid "General"
@@ -756,12 +756,12 @@ msgstr "Голова разлика"
 #: contents/code/providers/SportScoreSports.js:180
 msgctxt "@info:tooltip"
 msgid "Goal difference"
-msgstr ""
+msgstr "Голова разлика"
 
 #: contents/code/providers/SportScoreSports.js:155
 msgctxt "@info:tooltip"
 msgid "Goal differential"
-msgstr ""
+msgstr "Голова разлика"
 
 #: contents/ui/FullRepresentation.qml:1528
 msgctxt "@label"
@@ -777,7 +777,7 @@ msgstr "Голове отбелязани"
 #: contents/code/providers/SportScoreSports.js:179
 msgctxt "@info:tooltip"
 msgid "Goals against"
-msgstr ""
+msgstr "Допуснати голове"
 
 #: contents/ui/config/tabs/NotificationsAlertsTab.qml:68
 msgctxt "@option:check"
@@ -788,7 +788,7 @@ msgstr "Голове и промени в резултата"
 #: contents/code/providers/SportScoreSports.js:178
 msgctxt "@info:tooltip"
 msgid "Goals for"
-msgstr ""
+msgstr "Вкарани голове"
 
 #: contents/ui/main.qml:3241
 msgctxt "@title:notification"
@@ -873,7 +873,7 @@ msgstr "З"
 #: contents/code/providers/SportScoreSports.js:177
 msgctxt "Abbreviation for 'lost' in a standings table, keep very short"
 msgid "L"
-msgstr ""
+msgstr "З"
 
 #: contents/ui/config/tabs/AppearanceWidgetTab.qml:85
 msgctxt "@label:listbox"
@@ -1039,7 +1039,7 @@ msgstr "Зареждане на отбори…"
 #: contents/code/providers/SportScoreSports.js:177
 msgctxt "@info:tooltip"
 msgid "Lost"
-msgstr ""
+msgstr "Загубени"
 
 #: contents/ui/FullRepresentation.qml:1516
 msgctxt "@label"
@@ -1049,7 +1049,7 @@ msgstr "Загуби"
 #: contents/code/providers/SportScoreSports.js:124
 msgctxt "Abbreviation for 'matches played' in a cricket standings table, keep very short"
 msgid "M"
-msgstr ""
+msgstr "М"
 
 #: contents/ui/config/tabs/AppearancePanelTab.qml:271
 msgctxt "@item:inlistbox"
@@ -1087,7 +1087,7 @@ msgstr "Мачове за отбор/турнир:"
 #: contents/code/providers/SportScoreSports.js:124
 msgctxt "@info:tooltip"
 msgid "Matches played"
-msgstr ""
+msgstr "Изиграни мачове"
 
 #: contents/ui/config/tabs/NotificationsCompetitionsTab.qml:208
 msgctxt "@info"
@@ -1112,7 +1112,7 @@ msgstr "Няколко мача:"
 #: contents/code/providers/SportScoreSports.js:128
 msgctxt "Abbreviation for 'no result' in a cricket standings table, keep very short"
 msgid "NR"
-msgstr ""
+msgstr "НР"
 
 #: contents/ui/config/ConfigGeneral.qml:219
 msgctxt "@label:chooser"
@@ -1269,7 +1269,7 @@ msgstr "Няма скорошни резултати за %1"
 #: contents/code/providers/SportScoreSports.js:128
 msgctxt "@info:tooltip"
 msgid "No result"
-msgstr ""
+msgstr "Без резултат"
 
 #: contents/ui/main.qml:1903 contents/ui/main.qml:1920
 msgctxt "@info:status"
@@ -1406,7 +1406,7 @@ msgstr "Известяване при:"
 #: contents/code/providers/SportScoreSports.js:152
 msgctxt "Abbreviation for 'overtime/shootout losses' in a hockey standings table, keep very short"
 msgid "OTL"
-msgstr ""
+msgstr "Загуби в продължение/дузпи"
 
 #: contents/ui/config/tabs/NotificationsCalendarTab.qml:88
 msgctxt "@item:inlistbox"
@@ -1469,37 +1469,37 @@ msgstr "Отворете настройките, за да добавите ли
 #: contents/code/providers/SportScoreSports.js:152
 msgctxt "@info:tooltip"
 msgid "Overtime/shootout losses"
-msgstr ""
+msgstr "Загуби в продължение/дузпи"
 
 #: contents/code/providers/SportScoreSports.js:117
 msgctxt "Abbreviation for 'points against' in a basketball standings table, keep very short"
 msgid "PA"
-msgstr ""
+msgstr "Допуснати точки"
 
 #: contents/code/providers/SportScoreSports.js:168
 msgctxt "Abbreviation for 'points against' in an American football standings table, keep very short"
 msgid "PA"
-msgstr ""
+msgstr "Допуснати точки"
 
 #: contents/code/providers/SportScoreSports.js:138
 msgctxt "Abbreviation for 'win percentage' in a baseball standings table, keep very short"
 msgid "PCT"
-msgstr ""
+msgstr "% победи"
 
 #: contents/code/providers/SportScoreSports.js:166
 msgctxt "Abbreviation for 'win percentage' in an American football standings table, keep very short"
 msgid "PCT"
-msgstr ""
+msgstr "% победи"
 
 #: contents/code/providers/SportScoreSports.js:116
 msgctxt "Abbreviation for 'points for' in a basketball standings table, keep very short"
 msgid "PF"
-msgstr ""
+msgstr "Отбелязани точки"
 
 #: contents/code/providers/SportScoreSports.js:167
 msgctxt "Abbreviation for 'points for' in an American football standings table, keep very short"
 msgid "PF"
-msgstr ""
+msgstr "Отбелязани точки"
 
 #: contents/ui/config/SavedLeaguesList.qml:572
 msgctxt "@option:check"
@@ -1534,7 +1534,7 @@ msgstr "Режим на панела:"
 #: contents/code/providers/SportScoreSports.js:119
 msgctxt "Abbreviation for 'win percentage' in a basketball standings table, keep very short"
 msgid "Pct"
-msgstr ""
+msgstr "%"
 
 #: contents/ui/main.qml:3256
 msgctxt "@title:notification"
@@ -1571,12 +1571,12 @@ msgstr "И"
 #: contents/code/providers/SportScoreSports.js:174
 msgctxt "Abbreviation for 'played' in a football/soccer standings table, keep very short"
 msgid "Pl"
-msgstr ""
+msgstr "И"
 
 #: contents/code/providers/SportScoreSports.js:174
 msgctxt "@info:tooltip"
 msgid "Played"
-msgstr ""
+msgstr "Изиграни"
 
 #: contents/ui/FullRepresentation.qml:1498
 msgctxt "@label"
@@ -1607,14 +1607,14 @@ msgstr "Играчи"
 #: contents/code/providers/SportScoreSports.js:169
 msgctxt "@info:tooltip"
 msgid "Point differential"
-msgstr ""
+msgstr "Точкова разлика"
 
 #: contents/code/providers/SportScoreSports.js:129
 #: contents/code/providers/SportScoreSports.js:156
 #: contents/code/providers/SportScoreSports.js:181
 msgctxt "@info:tooltip"
 msgid "Points"
-msgstr ""
+msgstr "Точки"
 
 #: contents/ui/FullRepresentation.qml:1540
 msgctxt "@label"
@@ -1625,13 +1625,13 @@ msgstr "Точки"
 #: contents/code/providers/SportScoreSports.js:168
 msgctxt "@info:tooltip"
 msgid "Points against"
-msgstr ""
+msgstr "Допуснати точки"
 
 #: contents/code/providers/SportScoreSports.js:116
 #: contents/code/providers/SportScoreSports.js:167
 msgctxt "@info:tooltip"
 msgid "Points for"
-msgstr ""
+msgstr "Отбелязани точки"
 
 #: contents/ui/config/tabs/NotificationsAlertsTab.qml:107
 msgctxt "@info"
@@ -1658,17 +1658,17 @@ msgstr "Т"
 #: contents/code/providers/SportScoreSports.js:181
 msgctxt "Abbreviation for 'points' in a standings table, keep very short"
 msgid "Pts"
-msgstr ""
+msgstr "Т"
 
 #: contents/code/providers/SportScoreSports.js:141
 msgctxt "Abbreviation for 'runs against' in a baseball standings table, keep very short"
 msgid "RA"
-msgstr ""
+msgstr "Допуснати рънове"
 
 #: contents/code/providers/SportScoreSports.js:140
 msgctxt "Abbreviation for 'runs scored' in a baseball standings table, keep very short"
 msgid "RS"
-msgstr ""
+msgstr "Отбелязани рънове"
 
 #: contents/ui/MatchesToolTip.qml:194
 msgctxt "@title:group"
@@ -1783,17 +1783,17 @@ msgstr "Интервал на смяна:"
 #: contents/code/providers/SportScoreSports.js:142
 msgctxt "@info:tooltip"
 msgid "Run differential"
-msgstr ""
+msgstr "Разлика в ръновете"
 
 #: contents/code/providers/SportScoreSports.js:141
 msgctxt "@info:tooltip"
 msgid "Runs against"
-msgstr ""
+msgstr "Допуснати рънове"
 
 #: contents/code/providers/SportScoreSports.js:140
 msgctxt "@info:tooltip"
 msgid "Runs scored"
-msgstr ""
+msgstr "Отбелязани рънове"
 
 #: contents/ui/config/SportWizardPage.qml:860
 msgctxt "@action:button"
@@ -2034,12 +2034,12 @@ msgstr "Системен шрифт"
 #: contents/code/providers/SportScoreSports.js:127
 msgctxt "Abbreviation for 'tied or drawn' in a cricket standings table, keep very short"
 msgid "T"
-msgstr ""
+msgstr "Р"
 
 #: contents/code/providers/SportScoreSports.js:165
 msgctxt "Abbreviation for 'tied' in an American football standings table, keep very short"
 msgid "T"
-msgstr ""
+msgstr "Р"
 
 #: contents/ui/main.qml:4629 contents/ui/main.qml:4630
 #: contents/ui/main.qml:4657 contents/ui/main.qml:4688
@@ -2154,12 +2154,12 @@ msgstr "Тънка линия"
 #: contents/code/providers/SportScoreSports.js:165
 msgctxt "@info:tooltip"
 msgid "Tied"
-msgstr ""
+msgstr "Равен"
 
 #: contents/code/providers/SportScoreSports.js:127
 msgctxt "@info:tooltip"
 msgid "Tied or drawn"
-msgstr ""
+msgstr "Равен"
 
 #: contents/ui/config/tabs/AppearanceMiscTab.qml:136
 msgctxt "@label:listbox"
@@ -2287,7 +2287,7 @@ msgstr "П"
 #: contents/code/providers/SportScoreSports.js:175
 msgctxt "Abbreviation for 'won' in a standings table, keep very short"
 msgid "W"
-msgstr ""
+msgstr "П"
 
 #: contents/ui/FullRepresentation.qml:1006
 msgctxt "@info:status"
@@ -2309,7 +2309,7 @@ msgstr "Област на панела на приспособлението:"
 #: contents/code/providers/SportScoreSports.js:166
 msgctxt "@info:tooltip"
 msgid "Win percentage"
-msgstr ""
+msgstr "Процент победи"
 
 #: contents/code/providers/SportScoreSports.js:114
 #: contents/code/providers/SportScoreSports.js:125
@@ -2319,7 +2319,7 @@ msgstr ""
 #: contents/code/providers/SportScoreSports.js:175
 msgctxt "@info:tooltip"
 msgid "Won"
-msgstr ""
+msgstr "Победи"
 
 #: contents/ui/FullRepresentation.qml:1504
 msgctxt "@label"
