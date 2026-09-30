@@ -43,9 +43,7 @@ PlasmoidItem {
     property int liveCount: liveMatchesModel.count
     // Upcoming matches in the panel scope (simple mode count): kickoff within the
     // next 24 hours, or every future fixture, per panelSimpleScheduleWindow.
-    readonly property int panelRemainingCount: String(Plasmoid.configuration.panelSimpleScheduleWindow || "next24h") === "all"
-        ? panelScheduleMatchesModel.count
-        : root.next24hUpcomingCount(panelScheduleMatchesModel)
+    readonly property int panelRemainingCount: String(Plasmoid.configuration.panelSimpleScheduleWindow || "next24h") === "all" ? panelScheduleMatchesModel.count : root.next24hUpcomingCount(panelScheduleMatchesModel)
     // Real-match counts come from the source arrays, not the list models, because
     // the Recent/Schedule models also hold invisible placeholder rows (group
     // headers for not-yet-loaded lazy groups) that must not inflate these counts.
@@ -348,7 +346,7 @@ PlasmoidItem {
         const max = Math.max(2, Number(Plasmoid.configuration.panelStackMaxMatches) || 3);
         const cells = [];
         const seen = {};
-        const push = (match) => {
+        const push = match => {
             if (cells.length >= max)
                 return;
             const key = root.stableMatchKey(match);
@@ -1419,10 +1417,7 @@ PlasmoidItem {
         if (unpinnedCount > 0) {
             const home = String(match && match.homeTeam || "");
             const away = String(match && match.awayTeam || "");
-            root.pinNotice = i18ncp("@info %2 and %3 are team names",
-                "Pinned %2 vs %3 to the panel - the previously pinned match was unpinned.",
-                "Pinned %2 vs %3 to the panel - %1 previously pinned matches were unpinned.",
-                unpinnedCount, home, away);
+            root.pinNotice = i18ncp("@info %2 and %3 are team names", "Pinned %2 vs %3 to the panel - the previously pinned match was unpinned.", "Pinned %2 vs %3 to the panel - %1 previously pinned matches were unpinned.", unpinnedCount, home, away);
             pinNoticeTimer.restart();
         }
     }
@@ -1503,9 +1498,7 @@ PlasmoidItem {
             return;
 
         const entries = root.parseSavedLeagueEntries();
-        const kept = entries.filter(entry => !(entry && entry.autoAdded === true
-            && String(entry.type || "") === "team"
-            && root.savedTeamEntryName(entry) === wanted));
+        const kept = entries.filter(entry => !(entry && entry.autoAdded === true && String(entry.type || "") === "team" && root.savedTeamEntryName(entry) === wanted));
         if (kept.length !== entries.length) {
             // Light path: the removed team's cached rows stay visible until the
             // next regular refresh instead of forcing a full refetch now.
@@ -2801,8 +2794,7 @@ PlasmoidItem {
             slugs.slice(0, 24).forEach(item => {
                 const cacheKey = "compteams|" + sport + "|" + item.slug;
                 const cached = wizardCache.read(cacheKey);
-                if (cached && Array.isArray(cached.value) && cached.value.length > 0
-                        && (Date.now() - cached.ts) < root.wizardTeamsRefreshMs)
+                if (cached && Array.isArray(cached.value) && cached.value.length > 0 && (Date.now() - cached.ts) < root.wizardTeamsRefreshMs)
                     return;
 
                 staggerIndex += 1;
@@ -2849,16 +2841,15 @@ PlasmoidItem {
         // each sport its own slot. Entries are still filtered to the active sport so
         // the signature changes when this sport's own leagues/teams change.
         const sport = SportVisuals.normalizedSport(root.activeSport);
-        const entries = (Array.isArray(root.savedLeagueEntries) ? root.savedLeagueEntries : [])
-            .filter(entry => SportVisuals.normalizedSport(entry && entry.sport) === sport);
+        const entries = (Array.isArray(root.savedLeagueEntries) ? root.savedLeagueEntries : []).filter(entry => SportVisuals.normalizedSport(entry && entry.sport) === sport);
         return JSON.stringify({
             "sport": sport,
             "entries": entries.map(entry => ({
-                    "s": String(entry && entry.sport || ""),
-                    "c": String(entry && entry.country || ""),
-                    "l": String(entry && entry.league || ""),
-                    "t": String(entry && entry.favoriteTeam || "")
-                }))
+                        "s": String(entry && entry.sport || ""),
+                        "c": String(entry && entry.country || ""),
+                        "l": String(entry && entry.league || ""),
+                        "t": String(entry && entry.favoriteTeam || "")
+                    }))
         });
     }
 
@@ -3150,7 +3141,7 @@ PlasmoidItem {
     function computeActiveProviders(live, schedule, recent, sport) {
         let sawEspn = false;
         let sawSportScore = false;
-        const scan = (list) => {
+        const scan = list => {
             (Array.isArray(list) ? list : []).forEach(match => {
                 const provider = String((match && (match.detailsProvider || match.sourceProvider)) || "").trim().toLowerCase();
                 if (provider === "espn")
@@ -3165,9 +3156,15 @@ PlasmoidItem {
 
         const providers = [];
         if (sawSportScore)
-            providers.push({ "name": "SportScore", "url": "https://sportscore.com/" });
+            providers.push({
+                "name": "SportScore",
+                "url": "https://sportscore.com/"
+            });
         if (sawEspn)
-            providers.push({ "name": "ESPN", "url": "https://www.espn.com/" });
+            providers.push({
+                "name": "ESPN",
+                "url": "https://www.espn.com/"
+            });
         // Before any data has loaded (or when a fetch has failed/returned empty),
         // there is nothing in `live`/`schedule`/`recent` to scan, so fall back to
         // whichever provider actually CAN serve the active sport rather than
@@ -3177,9 +3174,15 @@ PlasmoidItem {
         if (providers.length === 0) {
             const normalizedSport = SportVisuals.normalizedSport(sport);
             if (EspnSports.isNative(normalizedSport))
-                providers.push({ "name": "ESPN", "url": "https://www.espn.com/" });
+                providers.push({
+                    "name": "ESPN",
+                    "url": "https://www.espn.com/"
+                });
             else
-                providers.push({ "name": "SportScore", "url": "https://sportscore.com/" });
+                providers.push({
+                    "name": "SportScore",
+                    "url": "https://sportscore.com/"
+                });
         }
         return providers;
     }
@@ -3640,7 +3643,7 @@ PlasmoidItem {
         const list = Array.isArray(matches) ? matches : [];
         const byKey = {};
         const order = [];
-        const cleanliness = (m) => {
+        const cleanliness = m => {
             let score = 0;
             if (String(m && m.league || "").trim().length > 0)
                 score += 2;
@@ -3723,7 +3726,7 @@ PlasmoidItem {
     // Collects current fixtures from the live and schedule models and prunes
     // per-match notify/pin entries for fixtures no longer present.
     function prunePerMatchStateFromModels() {
-        const collect = (model) => {
+        const collect = model => {
             const out = [];
             for (let i = 0; i < model.count; i += 1) {
                 const m = model.get(i);
@@ -3743,10 +3746,7 @@ PlasmoidItem {
     // teams alone, with any trailing " - <league>" / " — <league>" suffix
     // stripped, catches both as the same match so it isn't listed twice.
     function looseMatchKey(match) {
-        const strip = (name) => String(name || "")
-            .replace(/\s*[—-]\s*[^—-]+$/, "")
-            .trim()
-            .toLowerCase();
+        const strip = name => String(name || "").replace(/\s*[—-]\s*[^—-]+$/, "").trim().toLowerCase();
         const home = strip(match && match.homeTeam);
         const away = strip(match && match.awayTeam);
         if (home.length === 0 && away.length === 0)
@@ -3803,7 +3803,10 @@ PlasmoidItem {
         rows.forEach(r => {
             const group = String(r.leagueGroup || "");
             if (!summaries[group])
-                summaries[group] = { "total": 0, "live": 0 };
+                summaries[group] = {
+                    "total": 0,
+                    "live": 0
+                };
             summaries[group].total += 1;
             if (r._isLive)
                 summaries[group].live += 1;
@@ -4187,7 +4190,7 @@ PlasmoidItem {
         configRefreshTimer.restart();
     }
 
-    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground | PlasmaCore.Types.ConfigurableBackground
+    Plasmoid.backgroundHints: PlasmaCore.Types.DefaultBackground | PlasmaCore.Types.ConfigurableBackground
     Plasmoid.icon: "applications-games"
     Plasmoid.title: i18n("Sports Widget for Plasma")
     Layout.fillWidth: Plasmoid.formFactor === PlasmaCore.Types.Horizontal && root.panelAreaFill
@@ -4261,7 +4264,10 @@ PlasmoidItem {
             // this one can, via inFlight (should never exceed _espnMaxConcurrent)
             // and queued (how many are still waiting their turn).
             console.warn("[nhl-debug] pumpEspnQueue dispatching, inFlight:", root._espnInFlight, "/", root._espnMaxConcurrent, "queued:", root._espnQueue.length);
-            espnCurlSource.pending[job.command] = { onSuccess: job.onSuccess, onError: job.onError };
+            espnCurlSource.pending[job.command] = {
+                onSuccess: job.onSuccess,
+                onError: job.onError
+            };
             espnCurlSource.connectSource(job.command);
         }
     }
@@ -4323,10 +4329,12 @@ PlasmoidItem {
         // curl never sees it. Its only purpose is guaranteeing a unique command
         // string per call, so DataSource's sourceName can never collide even if
         // two identical URLs land in the same cache-bust time bucket.
-        const command = "REQ_ID=" + root.espnCurlRequestCounter + " curl -s -m 14 "
-            + "-w " + root.shellQuote("\n" + root.espnCurlStatusMarker + ":%{http_code}") + " "
-            + root.shellQuote(url);
-        root._espnQueue.push({ command: command, onSuccess: onSuccess, onError: onError });
+        const command = "REQ_ID=" + root.espnCurlRequestCounter + " curl -s -m 14 " + "-w " + root.shellQuote("\n" + root.espnCurlStatusMarker + ":%{http_code}") + " " + root.shellQuote(url);
+        root._espnQueue.push({
+            command: command,
+            onSuccess: onSuccess,
+            onError: onError
+        });
         root.pumpEspnQueue();
     }
 
@@ -4978,9 +4986,18 @@ PlasmoidItem {
         teamFavoriteState: teamName => root.isQuickFavoriteTeam(teamName)
         pinNoticeText: root.pinNotice
         onPinNoticeDismissed: root.pinNotice = ""
-        onMatchNotifyToggled: match => { root.toggleMatchNotify(match); root.matchActionsTick += 1; }
-        onMatchFavoriteToggled: (teamName, match) => { root.toggleQuickFavoriteTeam(teamName, match); root.matchActionsTick += 1; }
-        onMatchPanelPinToggled: match => { root.toggleMatchPin(match); root.matchActionsTick += 1; }
+        onMatchNotifyToggled: match => {
+            root.toggleMatchNotify(match);
+            root.matchActionsTick += 1;
+        }
+        onMatchFavoriteToggled: (teamName, match) => {
+            root.toggleQuickFavoriteTeam(teamName, match);
+            root.matchActionsTick += 1;
+        }
+        onMatchPanelPinToggled: match => {
+            root.toggleMatchPin(match);
+            root.matchActionsTick += 1;
+        }
 
         leaguesModel: leaguesMatchesModel
         leaguesCollapsedGroups: root.leaguesCollapsedGroups
