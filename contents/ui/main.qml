@@ -1633,12 +1633,22 @@ PlasmoidItem {
             const options = root.requestOptionsForEntry(entry, token, manual, override);
             const scopeGroup = root.entryGroupLabel(entry);
             fetcher(options, matches => {
-                const scopedMatches = (Array.isArray(matches) ? matches : []).filter(match => root.matchBelongsToEntry(entry, match)).map(match => {
+                const rawMatches = Array.isArray(matches) ? matches : [];
+                const scopedMatches = rawMatches.filter(match => root.matchBelongsToEntry(entry, match)).map(match => {
                     const copy = Object.assign({}, match || {});
                     copy.scopeOrder = index;
                     copy.scopeGroup = scopeGroup;
                     return copy;
                 });
+                // TEMP DIAGNOSTIC (nhl-debug): rows the provider returned vs rows
+                // that survived matchBelongsToEntry. raw > 0 with kept == 0 means the
+                // entry/league-label match is dropping real rows; the sample shows
+                // both sides of that comparison.
+                console.warn("[sports-widget-debug] fetchScopedMatches", String(fetcher && fetcher.name || "fetcher"), scopeGroup, "raw:", rawMatches.length, "kept:", scopedMatches.length, "pending:", pending - 1);
+                if (rawMatches.length > 0 && scopedMatches.length === 0) {
+                    const sample = rawMatches[0] || {};
+                    console.warn("[sports-widget-debug]   all rows dropped. entry league:", String(entry && entry.league || ""), "| entry label:", root.displayLeagueLabel(entry), "| sample row league:", String(sample.league || ""), "| sample:", String(sample.homeTeam || ""), "vs", String(sample.awayTeam || ""), String(sample.status || ""));
+                }
                 merged = root.mergeScopedMatches(merged, scopedMatches);
                 pending -= 1;
                 if (pending > 0)
@@ -1651,6 +1661,7 @@ PlasmoidItem {
                 }
             }, message => {
                 const text = String(message || "").trim();
+                console.warn("[sports-widget-debug] fetchScopedMatches", String(fetcher && fetcher.name || "fetcher"), scopeGroup, "ERROR:", text.length > 0 ? text : "(no message)", "pending:", pending - 1);
                 if (text.length > 0)
                     errors.push(text);
                 // A failed entry is NOT "this entry has no live matches" - its
@@ -1979,7 +1990,7 @@ PlasmoidItem {
         // TEMP DIAGNOSTIC: how many scope entries this one live poll fans out to.
         // Each non-ESPN entry triggers its own full SportScore-page fetch+parse on
         // the UI thread, so a high count here is the suspected freeze amplifier.
-        console.warn("[sports-widget][profile] live refresh dispatch: " + root.liveScopeEntries().length + " scope entries");
+        console.warn("[sports-widget-debug][profile] live refresh dispatch: " + root.liveScopeEntries().length + " scope entries");
         const liveFetchFailedEntries = [];
         root.fetchScopedMatches(root.liveScopeEntries(), root.refreshToken, true, SportsApi.fetchLiveScores, matches => {
             // A superseded poll must still release the in-flight flag, or every
@@ -3688,17 +3699,21 @@ PlasmoidItem {
         sourceMatches = root.withKickoffPromotedMatches(sourceMatches);
         // Drop cross-scope duplicates of the same fixture (kept the richest copy).
         sourceMatches = root.dedupLiveMatches(sourceMatches);
+        // TEMP DIAGNOSTIC (nhl-debug): incoming live rows (before kickoff promotion
+        // and dedup) vs after, plus the state the empty-poll "blip" rule depends on.
+        console.warn("[sports-widget-debug] applyLiveMatches in:", Array.isArray(matches) ? matches.length : 0, "after promotion/dedup:", sourceMatches.length, "manual:", manual, "previous rows:", root.latestLiveMatches.length, "consecutiveEmpty:", root.consecutiveEmptyLiveRefreshes);
         const scopeSignature = root.liveScopeSignature();
         const sameScope = scopeSignature === root.lastLiveScopeSignature;
         if (!manual && sourceMatches.length === 0 && sameScope && root.latestLiveMatches.length > 0 && root.consecutiveEmptyLiveRefreshes < 2) {
             root.consecutiveEmptyLiveRefreshes += 1;
+            console.warn("[sports-widget-debug] applyLiveMatches: empty poll treated as a blip, keeping", root.latestLiveMatches.length, "previous rows (consecutiveEmpty:", root.consecutiveEmptyLiveRefreshes + ")");
             // We keep the existing live rows (a single empty poll is treated as a
             // blip), but still rebuild the Live tab's combined model so any newly
             // arrived schedule data is reflected.
             root.rebuildLeaguesModel();
             const _blipMs = Date.now() - _applyStart;
             if (_blipMs >= 8)
-                console.warn("[sports-widget][profile] applyLiveMatches (blip rebuild) took " + _blipMs + "ms");
+                console.warn("[sports-widget-debug][profile] applyLiveMatches (blip rebuild) took " + _blipMs + "ms");
             return liveMatchesModel.count;
         }
 
@@ -3719,7 +3734,7 @@ PlasmoidItem {
         root.prunePerMatchStateFromModels();
         const _applyMs = Date.now() - _applyStart;
         if (_applyMs >= 8)
-            console.warn("[sports-widget][profile] applyLiveMatches took " + _applyMs + "ms (" + matches.length + " rows)");
+            console.warn("[sports-widget-debug][profile] applyLiveMatches took " + _applyMs + "ms (" + matches.length + " rows)");
         return matches.length;
     }
 
@@ -4253,6 +4268,21 @@ PlasmoidItem {
     property int _espnInFlight: 0
     readonly property int _espnMaxConcurrent: 3
 
+    // TEMP DIAGNOSTIC (nhl-debug): ESPN URL without host and cache-bust param, so
+    // log lines stay short and can be matched with the espn#N lines in SportsApi.js.
+    function espnLogUrl(url) {
+        return String(url).replace(/^https:\/\/[^\/]+\/apis\//, "").replace(/[?&]t=\d+/, "");
+    }
+
+    // Match-details payloads (/summary, /plays) are ~1 MB each and nothing is waiting on
+    // them the way the Live/Schedule/Recent tabs wait on the scoreboard, so they must not
+    // sit AHEAD of scoreboard/standings requests in the queue: five of them once held a
+    // live-window request for 4 s (it takes ~0.3 s when the queue is clear).
+    function espnIsLowPriorityUrl(url) {
+        const value = String(url);
+        return value.indexOf("/summary?") >= 0 || value.indexOf("/plays?") >= 0;
+    }
+
     function pumpEspnQueue() {
         while (root._espnInFlight < root._espnMaxConcurrent && root._espnQueue.length > 0) {
             const job = root._espnQueue.shift();
@@ -4263,10 +4293,13 @@ PlasmoidItem {
             // enqueue time, which can't tell you whether the cap is holding -
             // this one can, via inFlight (should never exceed _espnMaxConcurrent)
             // and queued (how many are still waiting their turn).
-            console.warn("[nhl-debug] pumpEspnQueue dispatching, inFlight:", root._espnInFlight, "/", root._espnMaxConcurrent, "queued:", root._espnQueue.length);
+            console.warn("[sports-widget-debug] curl#" + job.reqId, "dispatching, inFlight:", root._espnInFlight, "/", root._espnMaxConcurrent, "queued:", root._espnQueue.length, root.espnLogUrl(job.url), job.low ? "[low priority: match details]" : "");
             espnCurlSource.pending[job.command] = {
                 onSuccess: job.onSuccess,
-                onError: job.onError
+                onError: job.onError,
+                url: job.url,
+                reqId: job.reqId,
+                startedAt: Date.now()
             };
             espnCurlSource.connectSource(job.command);
         }
@@ -4292,14 +4325,17 @@ PlasmoidItem {
             const callbacks = pending[sourceName];
             delete pending[sourceName];
             if (!callbacks) {
-                console.warn("[nhl-debug][raw]", sourceName, "| exit:", data["exit code"], "| stdout:", data["stdout"], "| stderr:", data["stderr"]);
+                console.warn("[sports-widget-debug][raw]", sourceName, "| exit:", data["exit code"], "| stdout:", data["stdout"], "| stderr:", data["stderr"]);
                 return;
             }
 
             const exitCode = data["exit code"];
             const stdout = String(data["stdout"] || "");
             const stderr = String(data["stderr"] || "");
+            const logTag = "[sports-widget-debug] curl#" + callbacks.reqId + " +" + (Date.now() - callbacks.startedAt) + "ms";
+            const logUrl = root.espnLogUrl(callbacks.url);
             if (exitCode !== 0) {
+                console.warn(logTag, "curl exit", exitCode, "stderr:", stderr.trim(), "<-", logUrl);
                 callbacks.onError("curl exit " + exitCode + (stderr.length > 0 ? (": " + stderr.trim()) : ""));
                 return;
             }
@@ -4307,6 +4343,7 @@ PlasmoidItem {
             const marker = "\n" + root.espnCurlStatusMarker + ":";
             const markerIndex = stdout.lastIndexOf(marker);
             if (markerIndex < 0) {
+                console.warn(logTag, "malformed curl output (missing status marker), stdout tail:", stdout.slice(-200), "<-", logUrl);
                 callbacks.onError("malformed curl output (missing status marker)");
                 return;
             }
@@ -4316,6 +4353,10 @@ PlasmoidItem {
             if (status >= 200 && status < 300) {
                 callbacks.onSuccess(body);
             } else {
+                // The body of a non-2xx response is discarded below, but it is
+                // where ESPN usually says why (e.g. an invalid date range), so
+                // log its start before throwing it away.
+                console.warn(logTag, "HTTP", status, "body (first 400 chars):", body.slice(0, 400), "<-", logUrl);
                 callbacks.onError("HTTP " + status + " (via curl)");
             }
         }
@@ -4330,11 +4371,30 @@ PlasmoidItem {
         // string per call, so DataSource's sourceName can never collide even if
         // two identical URLs land in the same cache-bust time bucket.
         const command = "REQ_ID=" + root.espnCurlRequestCounter + " curl -s -m 14 " + "-w " + root.shellQuote("\n" + root.espnCurlStatusMarker + ":%{http_code}") + " " + root.shellQuote(url);
-        root._espnQueue.push({
+        const job = {
             command: command,
+            url: url,
+            reqId: root.espnCurlRequestCounter,
+            low: root.espnIsLowPriorityUrl(url),
             onSuccess: onSuccess,
             onError: onError
-        });
+        };
+        if (job.low) {
+            root._espnQueue.push(job);
+        } else {
+            // Scoreboard/standings go ahead of any queued match-details jobs (FIFO among
+            // themselves). A job that is already running is never interrupted.
+            let position = root._espnQueue.length;
+            for (let i = 0; i < root._espnQueue.length; i += 1) {
+                if (root._espnQueue[i].low) {
+                    position = i;
+                    break;
+                }
+            }
+            if (position < root._espnQueue.length)
+                console.warn("[sports-widget-debug] curl#" + job.reqId, "queued ahead of", root._espnQueue.length - position, "low-priority job(s)", root.espnLogUrl(url));
+            root._espnQueue.splice(position, 0, job);
+        }
         root.pumpEspnQueue();
     }
 
@@ -4603,7 +4663,7 @@ PlasmoidItem {
                 // it's unambiguous, from the log alone, whether a given burst of
                 // ESPN requests was triggered by a real resume-from-suspend versus
                 // an ordinary periodic refresh.
-                console.warn("[nhl-debug] wake detected, gap ms:", now - root.lastWakeTickMs);
+                console.warn("[sports-widget-debug] wake detected, gap ms:", now - root.lastWakeTickMs);
                 root.handleSystemWake();
             }
             root.lastWakeTickMs = now;

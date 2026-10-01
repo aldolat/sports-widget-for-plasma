@@ -609,7 +609,7 @@ KCM.SimpleKCM {
             const callbacks = pending[sourceName];
             delete pending[sourceName];
             if (!callbacks) {
-                console.warn("[nhl-debug][raw]", sourceName, "| exit:", data["exit code"], "| stdout:", data["stdout"], "| stderr:", data["stderr"]);
+                console.warn("[sports-widget-debug][raw]", sourceName, "| exit:", data["exit code"], "| stdout:", data["stdout"], "| stderr:", data["stderr"]);
                 return;
             }
 
@@ -655,10 +655,11 @@ KCM.SimpleKCM {
         // curl never sees it. Its only purpose is guaranteeing a unique command
         // string per call, so DataSource's sourceName can never collide even if
         // two identical URLs land in the same cache-bust time bucket.
-        const command = "REQ_ID=" + root.espnCurlRequestCounter + " curl -s -m 14 "
-            + "-w " + root.shellQuote("\n" + root.espnCurlStatusMarker + ":%{http_code}") + " "
-            + root.shellQuote(url);
-        espnCurlSource.pending[command] = { onSuccess: onSuccess, onError: onError };
+        const command = "REQ_ID=" + root.espnCurlRequestCounter + " curl -s -m 14 " + "-w " + root.shellQuote("\n" + root.espnCurlStatusMarker + ":%{http_code}") + " " + root.shellQuote(url);
+        espnCurlSource.pending[command] = {
+            onSuccess: onSuccess,
+            onError: onError
+        };
         espnCurlSource.connectSource(command);
     }
 
@@ -666,15 +667,17 @@ KCM.SimpleKCM {
     // shell every time, but the identical command fails via this DataSource -
     // meaning the two invocations aren't as identical as they look. Dump what
     // plasmashell's spawned processes actually see (which curl, its version/
-    // TLS backend, full environment) so it can be diffed against the user's
-    // own shell. Remove this block once the discrepancy is found.
+    // TLS backend) so it can be diffed against the user's own shell. The full
+    // environment (`env | sort`) is deliberately NOT dumped any more: it lands in
+    // the plasmashell log and can hold tokens and agent sockets. Remove this
+    // block once the discrepancy is found.
     property bool espnDiagnosticRun: false
 
     function runEspnDiagnostic() {
         if (root.espnDiagnosticRun)
             return;
         root.espnDiagnosticRun = true;
-        espnCurlSource.connectSource("echo WHICH:; which curl; echo VERSION:; curl --version; echo ENV:; env | sort");
+        espnCurlSource.connectSource("echo WHICH:; which curl; echo VERSION:; curl --version");
     }
 
     Component.onCompleted: {

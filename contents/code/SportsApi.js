@@ -104,42 +104,109 @@ function setEspnRequester(runner) {
 // call this instead of requestText(cacheBustedUrl(...)) directly, so the curl
 // routing fix applies uniformly rather than needing to be re-applied per
 // function every time a new ESPN endpoint is added.
+let _espnReqSeq = 0;
+
+// Compact form of an ESPN URL for log lines: drops the host and the cache-bust param.
+function espnLogUrl(url) {
+    return stringValue(url)
+        .replace(/^https:\/\/[^\/]+\/apis\//, "")
+        .replace(/[?&]t=\d+/, "");
+}
+
+// Concurrent requests for the SAME ESPN URL share one network call. Overlapping windows
+// (live vs fixtures both ask for today, recent vs the form badges share ~9 days) and a
+// match-details view that asks for the same ~1 MB summary twice used to send identical
+// requests side by side. The first caller sends the request, later callers join its
+// waiter list and all are answered together. An entry older than the curl timeout (-m 14)
+// plus margin is treated as hung and replaced, so one lost callback can never block a URL.
+const ESPN_INFLIGHT_MAX_AGE_MS = 30000;
+const _espnInflight = {};
+
 function requestEspnText(url, onSuccess, onError) {
     const busted = cacheBustedUrl(url);
-    // TEMP DIAGNOSTIC (nhl-debug): kept in per request while the ESPN 403
-    // investigation is ongoing across all endpoints, not just teams.
-    // TEMP DIAGNOSTIC (nhl-debug): a short response can legitimately mean "no
-    // games today" (e.g. NHL/MLB off-season windows), or it can mean ESPN's edge
-    // returned an error/WAF block page through curl instead of real JSON. Log a
-    // preview so the two cases are distinguishable from the log alone rather than
-    // guessing from length.
+    // TEMP DIAGNOSTIC (nhl-debug): every line carries a request id, elapsed time and
+    // the URL, so a failure ("HTTP 400") can be tied to the exact request that caused
+    // it. A short successful response can legitimately mean "no games", or an edge
+    // block page served through curl - the preview tells the two apart.
+    const reqId = ++_espnReqSeq;
+    const startedAt = Date.now();
+    const shortUrl = espnLogUrl(busted);
+    function tag() {
+        return "[sports-widget-debug] espn#" + reqId + " +" + (Date.now() - startedAt) + "ms";
+    }
     function logEspnResponse(text) {
         const value = stringValue(text);
-        console.warn("[nhl-debug] requestEspnText response length:", value.length);
+        console.warn(tag(), "OK", value.length + "B", shortUrl);
         if (value.length < 2000)
-            console.warn("[nhl-debug] requestEspnText short response preview:", value.slice(0, 300));
+            console.warn(tag(), "short response preview:", value.slice(0, 300));
+    }
+    function logEspnError(error) {
+        console.warn(tag(), "FAILED:", error, "<-", shortUrl);
+    }
+
+    const existing = _espnInflight[url];
+    if (existing && (Date.now() - existing.startedAt) < ESPN_INFLIGHT_MAX_AGE_MS) {
+        existing.waiters.push({ onSuccess: onSuccess, onError: onError });
+        console.warn(tag(), "JOINED in-flight request (not sent again), waiters:", existing.waiters.length, shortUrl);
+        return;
+    }
+    if (existing)
+        console.warn(tag(), "previous in-flight request for this URL is stale, sending a new one", shortUrl);
+
+    const entry = { startedAt: startedAt, waiters: [{ onSuccess: onSuccess, onError: onError }] };
+    _espnInflight[url] = entry;
+    function settle(ok, value) {
+        if (_espnInflight[url] === entry)
+            delete _espnInflight[url];
+        entry.waiters.forEach(waiter => {
+            // One waiter throwing must not starve the others sharing this request.
+            try {
+                finish(ok ? waiter.onSuccess : waiter.onError, value);
+            } catch (error) {
+                console.warn(tag(), "waiter callback threw:", error, error && error.stack);
+            }
+        });
     }
 
     if (_espnRequester) {
-        console.warn("[nhl-debug] requestEspnText via injected ESPN requester (curl):", busted);
+        console.warn(tag(), "START (curl)", shortUrl);
         _espnRequester(busted, text => {
             logEspnResponse(text);
-            finish(onSuccess, text);
+            settle(true, text);
         }, error => {
-            console.warn("[nhl-debug] requestEspnText onError fired:", error);
-            finish(onError, error);
+            logEspnError(error);
+            settle(false, error);
         });
         return;
     }
 
-    console.warn("[nhl-debug] requestEspnText via XHR fallback (no ESPN requester set):", busted);
+    console.warn(tag(), "START (XHR fallback - no ESPN requester set)", shortUrl);
     requestText(busted, text => {
         logEspnResponse(text);
-        finish(onSuccess, text);
+        settle(true, text);
     }, error => {
-        console.warn("[nhl-debug] requestEspnText onError fired:", error);
-        finish(onError, error);
+        logEspnError(error);
+        settle(false, error);
     }, { ignoreCooldown: true });
+}
+
+// TEMP DIAGNOSTIC (nhl-debug): "events=N states={state/name: count}" for a parsed
+// scoreboard payload, so the log shows what ESPN reported (e.g. "in/STATUS_IN_PROGRESS")
+// independently of what normalizeEspnScoreboard kept. Lists top-level keys when there
+// are no events, which reveals an error object or a changed response shape.
+function espnPayloadSummary(payload) {
+    const events = arrayValue(payload && payload.events);
+    const states = {};
+    events.forEach(event => {
+        const competition = arrayValue(event && event.competitions)[0] || {};
+        const type = ((competition.status || (event && event.status) || {}).type) || {};
+        const key = stringValue(type.state) + "/" + stringValue(type.name);
+        states[key] = (states[key] || 0) + 1;
+    });
+    let summary = "events=" + events.length + " states=" + JSON.stringify(states);
+    if (events.length === 0 && payload && typeof payload === "object")
+        summary += " keys=" + Object.keys(payload).join(",");
+    return summary;
 }
 
 // Runs the ESPN scoreboard for an entry/mode as a race runner, or null when ESPN
@@ -1244,11 +1311,15 @@ function tryEspnMatches(options, mode, onSuccess, onError, onNoEspn) {
         return;
     }
     fetchEspnScoreboard(plan.espnSport, plan.league, mode, options, rows => {
+        console.warn("[sports-widget-debug] tryEspnMatches", plan.league, mode, "rows:", arrayValue(rows).length);
         if (arrayValue(rows).length > 0)
             finish(onSuccess, rows);
         else
             onNoEspn();
-    }, () => onNoEspn());
+    }, error => {
+        console.warn("[sports-widget-debug] tryEspnMatches", plan.league, mode, "ERROR (reported as empty):", error);
+        onNoEspn();
+    });
 }
 
 // Coverage-based routing - no instability fallback. Each entry is served by
@@ -1325,6 +1396,156 @@ function espnScoreboardUrl(espnSport, league, dates, limit) {
     if (stringValue(dates).length > 0)
         url += "&dates=" + encodeURIComponent(dates);
     return url;
+}
+
+// ---------------------------------------------------------------------------
+// ESPN scoreboard date RANGES (dates=YYYYMMDD-YYYYMMDD) no longer work. Around
+// 2026-09-15 the site API began answering every range - even a one-day range, for
+// every sport - with HTTP 400 {"code":400,"message":"Failed to get events endpoint."}.
+// Single days (YYYYMMDD), months (YYYYMM) and years (YYYY) still return 200, and
+// `limit` is honoured up to 500 (above that ESPN silently truncates the list).
+//
+// Every caller that used to send a range goes through requestEspnScoreboardPayload()
+// below. It splits the range into single-day requests - or one month request for
+// the long stretches of a wide window - fetches them (the QML side already queues
+// ESPN requests three at a time), merges and de-duplicates the events and hands back
+// ONE payload shaped like the old range answer, so the normalizers are unchanged.
+// ---------------------------------------------------------------------------
+const ESPN_DATE_RANGE_RE = /^(\d{4})(\d{2})(\d{2})-(\d{4})(\d{2})(\d{2})$/;
+// Within one calendar month, a stretch of up to this many days is fetched day by day;
+// a longer one is fetched as a single YYYYMM request and trimmed client-side. Days
+// are preferred because each ESPN event row carries a full box-score blob: a busy
+// daily league's day is ~100 KB, its whole month several MB (a UI-thread JSON.parse
+// stall). Wide windows are mostly off-season or future dates, where months are small.
+const ESPN_SPLIT_MAX_DAYS_PER_MONTH = 16;
+// ESPN returns a complete list up to limit=500 and silently truncates above it.
+const ESPN_SPLIT_MONTH_LIMIT = 500;
+
+// Plan the requests for a YYYYMMDD-YYYYMMDD range. Returns null when `dates` is not a
+// range (empty, a single day, a month...), meaning "send it as it is".
+function espnScoreboardChunks(dates, limit) {
+    const match = ESPN_DATE_RANGE_RE.exec(stringValue(dates));
+    if (!match)
+        return null;
+    const dayMs = 24 * 60 * 60 * 1000;
+    // Noon, not midnight, so DST shifts can never move a date across a day boundary.
+    const start = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0);
+    const end = new Date(Number(match[4]), Number(match[5]) - 1, Number(match[6]), 12, 0, 0);
+    const dayLimit = numberValue(limit) > 0 ? numberValue(limit) : ESPN_MATCH_LIMIT;
+    const chunks = [];
+    let cursor = start;
+    while (cursor.getTime() <= end.getTime()) {
+        const year = cursor.getFullYear();
+        const month = cursor.getMonth();
+        const monthEnd = new Date(year, month + 1, 0, 12, 0, 0);
+        const segmentEnd = monthEnd.getTime() < end.getTime() ? monthEnd : end;
+        const days = Math.round((segmentEnd.getTime() - cursor.getTime()) / dayMs) + 1;
+        if (days > ESPN_SPLIT_MAX_DAYS_PER_MONTH) {
+            chunks.push({ dates: "" + year + ("0" + (month + 1)).slice(-2), limit: ESPN_SPLIT_MONTH_LIMIT, windowed: true });
+        } else {
+            for (let day = new Date(cursor.getTime()); day.getTime() <= segmentEnd.getTime();
+                    day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1, 12, 0, 0))
+                chunks.push({ dates: espnDate(day.getTime()), limit: dayLimit, windowed: false });
+        }
+        cursor = new Date(year, month + 1, 1, 12, 0, 0);
+    }
+    return {
+        chunks: chunks,
+        // Month chunks are trimmed to the requested window, with half a day of slack on
+        // each side for the gap between ESPN's date buckets and the user's local day.
+        windowStartMs: new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0).getTime() - dayMs / 2,
+        windowEndMs: new Date(end.getFullYear(), end.getMonth(), end.getDate() + 1, 0, 0, 0).getTime() + dayMs / 2
+    };
+}
+
+// Fetch a scoreboard for `dates` (a range, single day, month or year) and deliver ONE
+// parsed payload ({ leagues, events, ... }). Ranges are split as described above; if
+// only some of the pieces fail the rest are delivered (a partial answer beats an empty
+// Live tab), and only when every piece fails is onError called.
+function requestEspnScoreboardPayload(espnSport, league, dates, limit, onSuccess, onError) {
+    const plan = espnScoreboardChunks(dates, limit);
+    if (!plan) {
+        requestEspnText(espnScoreboardUrl(espnSport, league, dates, limit), text => {
+            let payload = null;
+            try {
+                payload = JSON.parse(text);
+            } catch (error) {
+                console.warn("[sports-widget-debug] scoreboard", league, dates, "PARSE FAILED:", error, stringValue(text).slice(0, 200));
+                finish(onError, "Invalid ESPN scoreboard response");
+                return;
+            }
+            finish(onSuccess, payload);
+        }, error => finish(onError, error || "Unable to load ESPN scoreboard"));
+        return;
+    }
+
+    const chunks = plan.chunks;
+    console.warn("[sports-widget-debug] scoreboard", league, dates, "-> split into", chunks.length, "request(s):", chunks.map(chunk => chunk.dates).join(","));
+    if (chunks.length === 0) {
+        finish(onSuccess, { events: [] });
+        return;
+    }
+
+    const results = [];
+    let pending = chunks.length;
+    let failures = 0;
+    let firstError = "";
+    const settle = () => {
+        pending -= 1;
+        if (pending > 0)
+            return;
+        const okResults = results.filter(entry => entry && entry.payload);
+        if (okResults.length === 0) {
+            finish(onError, firstError || "Unable to load ESPN scoreboard");
+            return;
+        }
+        if (failures > 0)
+            console.warn("[sports-widget-debug] scoreboard", league, dates, "PARTIAL:", failures, "of", chunks.length, "request(s) failed, first error:", firstError);
+        const seen = {};
+        const events = [];
+        okResults.forEach(entry => {
+            arrayValue(entry.payload.events).forEach(event => {
+                const id = stringValue(event && event.id);
+                if (id.length > 0) {
+                    if (seen[id])
+                        return;
+                    seen[id] = true;
+                }
+                if (entry.windowed) {
+                    const time = Date.parse(stringValue(event && event.date));
+                    if (isFinite(time) && (time < plan.windowStartMs || time > plan.windowEndMs))
+                        return;
+                }
+                events.push(event);
+            });
+        });
+        // ESPN returned range answers ascending by start time; keep that order.
+        events.sort((left, right) => {
+            const a = stringValue(left && left.date);
+            const b = stringValue(right && right.date);
+            return a < b ? -1 : (a > b ? 1 : 0);
+        });
+        finish(onSuccess, Object.assign({}, okResults[0].payload, { events: events }));
+    };
+
+    chunks.forEach((chunk, index) => {
+        requestEspnText(espnScoreboardUrl(espnSport, league, chunk.dates, chunk.limit), text => {
+            try {
+                results[index] = { payload: JSON.parse(text), windowed: chunk.windowed };
+            } catch (error) {
+                failures += 1;
+                if (firstError.length === 0)
+                    firstError = "Invalid ESPN scoreboard response";
+                console.warn("[sports-widget-debug] scoreboard", league, chunk.dates, "PARSE FAILED:", error, stringValue(text).slice(0, 200));
+            }
+            settle();
+        }, error => {
+            failures += 1;
+            if (firstError.length === 0)
+                firstError = stringValue(error) || "Unable to load ESPN scoreboard";
+            settle();
+        });
+    });
 }
 
 function espnLogoFromTeam(team) {
@@ -1759,6 +1980,7 @@ function filterEspnRowsForEntry(rows, options) {
 // Sort + return only the rows for one mode out of a fully-normalized scoreboard.
 function espnRowsForMode(rows, mode, limit) {
     const filtered = filterEspnMatchesForMode(rows, mode);
+    console.warn("[sports-widget-debug] espnRowsForMode", mode, "in:", arrayValue(rows).length, "kept:", filtered.length);
     if (mode === "live")
         return sortMatches(filtered);
     const sorted = mode === "recent" ? sortRecentMatches(filtered) : sortMatches(filtered);
@@ -1895,17 +2117,22 @@ function fetchEspnScoreboardWindow(espnSport, league, dates, mode, options, onSu
     const sportValue = normalizedSport(options && (options.sports || options.sport)) || EspnSports.normalizedSport(espnSport);
     const leagueLabel = stringValue(options && options.leagueLabel);
     const merged = Object.assign({}, options, { espnSport: espnSport, espnLeague: league });
-    requestEspnText(espnScoreboardUrl(espnSport, league, dates, limit), text => {
-        let rows = [];
-        rows = profileSync("espnScoreboardWindow parse", league + "/" + mode + ", text=" + stringValue(text).length + "B", () => {
+    requestEspnScoreboardPayload(espnSport, league, dates, limit, payload => {
+        const rows = profileSync("espnScoreboardWindow normalize", league + "/" + mode + ", events=" + arrayValue(payload && payload.events).length, () => {
             try {
-                return normalizeEspnScoreboard(JSON.parse(text), sportValue, leagueLabel, merged);
+                console.warn("[sports-widget-debug] window", league, mode, dates, "->", espnPayloadSummary(payload));
+                return normalizeEspnScoreboard(payload, sportValue, leagueLabel, merged);
             } catch (error) {
+                console.warn("[sports-widget-debug] window", league, mode, dates, "NORMALIZE FAILED:", error);
                 return [];
             }
         });
+        console.warn("[sports-widget-debug] window", league, mode, dates, "normalized rows:", rows.length);
         finish(onSuccess, espnRowsForMode(filterEspnRowsForEntry(rows, options), mode, modeLimit));
-    }, error => finish(onError, error || "Unable to load ESPN scoreboard"));
+    }, error => {
+        console.warn("[sports-widget-debug] window", league, mode, dates, "REQUEST FAILED:", error);
+        finish(onError, error || "Unable to load ESPN scoreboard");
+    });
 }
 
 function fetchEspnScoreboard(espnSport, league, mode, options, onSuccess, onError) {
@@ -1998,15 +2225,16 @@ function fetchEspnScoreboard(espnSport, league, mode, options, onSuccess, onErro
     const sportValue = normalizedSport(options && (options.sports || options.sport)) || EspnSports.normalizedSport(espnSport);
     const leagueLabel = stringValue(options && options.leagueLabel);
     const merged = Object.assign({}, options, { espnSport: espnSport, espnLeague: league });
-    const url = espnScoreboardUrl(espnSport, league, espnUnifiedDates(options));
-
-    requestEspnText(url, text => {
+    requestEspnScoreboardPayload(espnSport, league, espnUnifiedDates(options), undefined, payload => {
         let rows = [];
         try {
-            rows = normalizeEspnScoreboard(JSON.parse(text), sportValue, leagueLabel, merged);
+            console.warn("[sports-widget-debug] unified", key, mode, "->", espnPayloadSummary(payload));
+            rows = normalizeEspnScoreboard(payload, sportValue, leagueLabel, merged);
         } catch (error) {
+            console.warn("[sports-widget-debug] unified", key, mode, "NORMALIZE FAILED:", error);
             rows = [];
         }
+        console.warn("[sports-widget-debug] unified", key, mode, "normalized rows:", rows.length);
         _espnScoreboardCache[key] = { ts: Date.now(), rows: rows };
         const waiters = _espnScoreboardWaiters[key] || [];
         delete _espnScoreboardWaiters[key];
@@ -2030,6 +2258,7 @@ function fetchEspnScoreboard(espnSport, league, mode, options, onSuccess, onErro
         const waiters = _espnScoreboardWaiters[key] || [];
         delete _espnScoreboardWaiters[key];
         const message = error || "Unable to load ESPN scoreboard";
+        console.warn("[sports-widget-debug] unified", key, mode, "REQUEST FAILED:", message, "waiters:", waiters.length);
         waiters.forEach(waiter => finish(waiter.onError, message));
     });
 }
@@ -2178,36 +2407,66 @@ function espnFormByTeam(matches) {
     return map;
 }
 
-// Build the form map for a league. For the current season, reuse the warm
-// scoreboard cache when present (no extra request) and otherwise fetch a ~10-week
-// recent window. For a historical season, fetch that season's own calendar-year
-// window so the form reflects how each team finished that season, not today's.
-function fetchEspnLeagueFormMap(espnSport, league, options, onDone, season) {
-    season = stringValue(season);
-    const key = espnSport + "|" + league;
-    const cached = _espnScoreboardCache[key];
-    if (season.length === 0 && cached && (Date.now() - cached.ts) < ESPN_SCOREBOARD_TTL_MS) {
-        finish(onDone, espnFormByTeam(cached.rows));
-        return;
-    }
+// Window feeding the standings' W/L form badges for the CURRENT season. Daily-cadence
+// sports need only the last couple of weeks for five results per team (and a month of
+// MLB is several MB); the others keep the previous 10-week window.
+const ESPN_FORM_DAILY_DAYS = 14;
+const _espnFormCache = {};
+function espnFormWindow(sportValue) {
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
-    // Historical season: span its whole calendar year. Current: the last 10 weeks.
-    const dates = season.length === 4
-        ? season + "0101-" + season + "1231"
-        : espnDate(now - 70 * day) + "-" + espnDate(now);
-    const limit = season.length === 4 ? ESPN_RECENT_FALLBACK_LIMIT : ESPN_MATCH_LIMIT;
+    if (ESPN_DAILY_CADENCE_SPORTS.indexOf(normalizedSport(sportValue)) >= 0)
+        return { dates: espnDate(now - ESPN_FORM_DAILY_DAYS * day) + "-" + espnDate(now), limit: ESPN_DAILY_RECENT_LIMIT };
+    return { dates: espnDate(now - 70 * day) + "-" + espnDate(now), limit: ESPN_MATCH_LIMIT };
+}
+
+// Build the form map for a league from its recent finished matches, cached per league
+// (form only changes when a match finishes). A historical season gets no form: its
+// whole calendar-year window can't be requested as a range any more, and pulling a
+// year month by month is tens of MB for the daily-cadence sports.
+function fetchEspnLeagueFormMap(espnSport, league, options, onDone, season) {
+    season = stringValue(season);
+    if (season.length === 4) {
+        finish(onDone, {});
+        return;
+    }
+    const key = espnSport + "|" + league;
+    const cached = _espnFormCache[key];
+    if (cached && (Date.now() - cached.ts) < ESPN_RECENT_TTL_MS) {
+        finish(onDone, cached.map);
+        return;
+    }
     const sportValue = normalizedSport(options && (options.sports || options.sport)) || EspnSports.normalizedSport(espnSport);
     const merged = Object.assign({}, options, { espnSport: espnSport, espnLeague: league });
-    requestEspnText(espnScoreboardUrl(espnSport, league, dates, limit), text => {
-        let matches = [];
+    const normalize = payload => {
         try {
-            matches = normalizeEspnScoreboard(JSON.parse(text), sportValue, "", merged);
+            return normalizeEspnScoreboard(payload, sportValue, "", merged);
         } catch (error) {
-            matches = [];
+            console.warn("[sports-widget-debug] form map NORMALIZE FAILED:", error);
+            return [];
         }
-        finish(onDone, espnFormByTeam(matches));
-    }, () => finish(onDone, {}));
+    };
+    const settle = matches => {
+        const map = espnFormByTeam(matches);
+        _espnFormCache[key] = { ts: Date.now(), map: map };
+        finish(onDone, map);
+    };
+    const failed = error => {
+        console.warn("[sports-widget-debug] form map request failed:", key, error);
+        finish(onDone, {});
+    };
+    const windowSpec = espnFormWindow(sportValue);
+    requestEspnScoreboardPayload(espnSport, league, windowSpec.dates, windowSpec.limit, payload => {
+        const matches = normalize(payload);
+        const fallback = espnRecentFallbackWindow(sportValue);
+        // Between seasons the short window is empty; widen once, as Recent does.
+        if (fallback && matches.filter(isFinishedMatch).length === 0) {
+            requestEspnScoreboardPayload(espnSport, league, fallback.dates, fallback.limit,
+                widePayload => settle(normalize(widePayload)), failed);
+            return;
+        }
+        settle(matches);
+    }, failed);
 }
 
 // Extract a 4-digit ESPN season year from the selected season option. ESPN
@@ -2370,7 +2629,7 @@ function parseEspnTeamsPayload(text, country) {
         const payload = JSON.parse(text);
         const groups = arrayValue(payload && payload.sports && payload.sports[0] && payload.sports[0].leagues);
         const list = groups.length > 0 ? arrayValue(groups[0].teams) : [];
-        console.warn("[nhl-debug] parsed groups:", groups.length, "teams in list:", list.length);
+        console.warn("[sports-widget-debug] parsed groups:", groups.length, "teams in list:", list.length);
         const seen = {};
         list.forEach(item => {
             const team = (item && item.team) || item || {};
@@ -2390,7 +2649,7 @@ function parseEspnTeamsPayload(text, country) {
             });
         });
     } catch (error) {
-        console.warn("[nhl-debug] JSON.parse threw:", error, "raw text length was:", stringValue(text).length);
+        console.warn("[sports-widget-debug] JSON.parse threw:", error, "raw text length was:", stringValue(text).length);
         rows = [];
     }
     rows.sort((a, b) => stringValue(a.label).localeCompare(stringValue(b.label)));
@@ -2407,7 +2666,7 @@ function fetchEspnTeams(espnSport, league, options, onSuccess, onError) {
 
     requestEspnText(url, text => {
         const rows = parseEspnTeamsPayload(text, country);
-        console.warn("[nhl-debug] fetchEspnTeams final row count:", rows.length);
+        console.warn("[sports-widget-debug] fetchEspnTeams final row count:", rows.length);
         finish(onSuccess, rows);
     }, error => finish(onError, error || "Unable to load ESPN teams"));
 }
@@ -2456,11 +2715,9 @@ function fetchEspnEventPlayers(espnSport, league, options, onSuccess, onError) {
     const day = 24 * 60 * 60 * 1000;
     const now = Date.now();
     const dates = espnDate(now - 120 * day) + "-" + espnDate(now + 60 * day);
-    const url = espnScoreboardUrl(espnSport, league, dates);
-    requestEspnText(url, text => {
+    requestEspnScoreboardPayload(espnSport, league, dates, undefined, payload => {
         let rows = [];
         try {
-            const payload = JSON.parse(text);
             const seen = {};
             arrayValue(payload && payload.events).forEach(event => {
                 arrayValue(event && event.competitions).forEach(competition => {
@@ -5986,7 +6243,7 @@ function profileSync(label, extra, fn) {
     const result = fn();
     const elapsed = Date.now() - start;
     if (elapsed >= _PROFILE_LOG_THRESHOLD_MS)
-        console.warn("[sports-widget][profile] " + label + " took " + elapsed + "ms" + (extra ? " (" + extra + ")" : ""));
+        console.warn("[sports-widget-debug][profile] " + label + " took " + elapsed + "ms" + (extra ? " (" + extra + ")" : ""));
     return result;
 }
 
