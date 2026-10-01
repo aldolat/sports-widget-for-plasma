@@ -129,17 +129,11 @@ Control {
     }
 
     function showBadges() {
-        if (compact.favoritePanelMode)
-            return true;
-
         const mode = compact.normalizedLayoutMode();
         return mode === "teamsAndBadges" || mode === "badgesOnly";
     }
 
     function showTeamNames() {
-        if (compact.favoritePanelMode)
-            return true;
-
         const mode = compact.normalizedLayoutMode();
         return mode === "teamsAndBadges" || mode === "teamsOnly";
     }
@@ -470,13 +464,14 @@ Control {
             visible: !compact.simpleMode && compact.favoritePanelMode && !compact.favoriteDetailsVisible
 
             RowLayout {
-                Layout.fillWidth: true
+                Layout.fillWidth: compact.showTeamNames()
                 Layout.minimumWidth: compact.homeSideNaturalWidth
                 Layout.alignment: Qt.AlignVCenter
                 spacing: compact.teamContentSpacing
 
                 TeamLogo {
                     sourceUrl: compact.homeBadge
+                    visible: compact.showBadges()
                 }
 
                 PanelLabel {
@@ -487,6 +482,7 @@ Control {
                     text: compact.homeTeam
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight
+                    visible: compact.showTeamNames()
                 }
             }
 
@@ -497,7 +493,7 @@ Control {
             }
 
             RowLayout {
-                Layout.fillWidth: true
+                Layout.fillWidth: compact.showTeamNames()
                 Layout.minimumWidth: compact.awaySideNaturalWidth
                 Layout.alignment: Qt.AlignVCenter
                 spacing: compact.teamContentSpacing
@@ -510,10 +506,12 @@ Control {
                     text: compact.awayTeam
                     horizontalAlignment: Text.AlignRight
                     elide: Text.ElideRight
+                    visible: compact.showTeamNames()
                 }
 
                 TeamLogo {
                     sourceUrl: compact.awayBadge
+                    visible: compact.showBadges()
                 }
             }
         }
@@ -615,8 +613,9 @@ Control {
         }
     }
 
-    // One compact match in stack mode: home badge, score (or kickoff time), away
-    // badge, with a small live dot when the match is in play.
+    // One compact match in stack mode: home badge and/or name, score (or kickoff
+    // time), away name and/or badge, with a small live dot when the match is in
+    // play. Which parts show follows the "Panel information" setting.
     component StackCell: Row {
         property var cell: ({})
 
@@ -631,9 +630,19 @@ Control {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.badgeSize
             height: parent.badgeSize
+            visible: compact.showBadges()
             sourceUrl: cell ? (cell.homeBadge || "") : ""
             fallbackIcon: "emblem-favorite"
             fallbackEmoji: SportVisuals.emoji(cell ? (cell.sport || compact.sport) : compact.sport)
+        }
+
+        PanelLabel {
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(implicitWidth, Kirigami.Units.gridUnit * 7)
+            text: cell ? String(cell.homeTeam || "") : ""
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
+            visible: compact.showTeamNames() && text.length > 0
         }
 
         Column {
@@ -669,10 +678,20 @@ Control {
             }
         }
 
+        PanelLabel {
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(implicitWidth, Kirigami.Units.gridUnit * 7)
+            text: cell ? String(cell.awayTeam || "") : ""
+            horizontalAlignment: Text.AlignLeft
+            elide: Text.ElideRight
+            visible: compact.showTeamNames() && text.length > 0
+        }
+
         TeamBadgeImage {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.badgeSize
             height: parent.badgeSize
+            visible: compact.showBadges()
             sourceUrl: cell ? (cell.awayBadge || "") : ""
             fallbackIcon: "emblem-favorite"
             fallbackEmoji: SportVisuals.emoji(cell ? (cell.sport || compact.sport) : compact.sport)
